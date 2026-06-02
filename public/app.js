@@ -38,20 +38,9 @@ function setTimerFromState(timer = {}) {
     document.querySelector("#startPauseTimerButton").textContent = timerRunning ? "Pause" : "Start";
     renderTimer();
 
+    // The server is the source of truth for the live timer.
+    // Clients poll /api/state once per second and render the server-calculated value.
     clearLocalTimerInterval();
-
-    if (timerRunning) {
-        timerInterval = setInterval(() => {
-            if (timerSeconds > 0) {
-                timerSeconds--;
-                renderTimer();
-            } else {
-                clearLocalTimerInterval();
-                timerRunning = false;
-                document.querySelector("#startPauseTimerButton").textContent = "Start";
-            }
-        }, 1000);
-    }
 }
 
 async function sendTimerAction(action, seconds = null) {

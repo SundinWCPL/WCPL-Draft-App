@@ -1,4 +1,11 @@
 {
   "draftedPicks": [],
-  "currentPickIndex": 0
+  "currentPickIndex": 0,
+  "timer": {
+    "defaultSeconds": 120,
+    "remainingSeconds": 120,
+    "running": true,
+    "endAt": 1780407567017
+  },
+  "announcement": null
 }

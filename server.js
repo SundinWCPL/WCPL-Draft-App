@@ -24,7 +24,7 @@ function getInitialState() {
             defaultSeconds: 120,
             remainingSeconds: 120,
             running: false,
-            lastUpdatedAt: null
+            endAt: null
         },
         announcement: null
     };
@@ -51,24 +51,24 @@ function computeLiveState(state) {
     const now = Date.now();
     const timer = liveState.timer;
 
-    if (liveState.announcement && liveState.announcement.until <= now) {
+    if (liveState.announcement && Number(liveState.announcement.until || 0) <= now) {
+        const announcementEndedAt = Number(liveState.announcement.until || now);
         liveState.announcement = null;
 
         if (liveState.currentPickIndex < readDraftOrderSync().length) {
             timer.remainingSeconds = timer.defaultSeconds;
             timer.running = true;
-            timer.lastUpdatedAt = now;
+            timer.endAt = announcementEndedAt + Number(timer.defaultSeconds || 0) * 1000;
         }
     }
 
-    if (timer.running && timer.lastUpdatedAt) {
-        const elapsedSeconds = Math.floor((now - Number(timer.lastUpdatedAt)) / 1000);
-        timer.remainingSeconds = Math.max(0, Number(timer.remainingSeconds || 0) - elapsedSeconds);
-        timer.lastUpdatedAt = now;
+    if (timer.running && timer.endAt) {
+        timer.remainingSeconds = Math.max(0, Math.ceil((Number(timer.endAt) - now) / 1000));
 
         if (timer.remainingSeconds <= 0) {
             timer.running = false;
             timer.remainingSeconds = 0;
+            timer.endAt = null;
         }
     }
 
@@ -286,7 +286,7 @@ app.post("/api/pick", async (req, res) => {
 
         state.timer.running = false;
         state.timer.remainingSeconds = state.timer.defaultSeconds;
-        state.timer.lastUpdatedAt = null;
+        state.timer.endAt = null;
 
         if (state.currentPickIndex >= draftOrder.length) {
             state.announcement = null;
@@ -329,7 +329,7 @@ app.post("/api/undo", (req, res) => {
         state.announcement = null;
         state.timer.running = false;
         state.timer.remainingSeconds = state.timer.defaultSeconds;
-        state.timer.lastUpdatedAt = null;
+        state.timer.endAt = null;
 
         writeDraftState(state);
 
@@ -350,14 +350,14 @@ app.post("/api/timer", (req, res) => {
         if (action === "start") {
             state.announcement = null;
             state.timer.running = true;
-            state.timer.lastUpdatedAt = now;
+            state.timer.endAt = now + Number(state.timer.remainingSeconds || state.timer.defaultSeconds || 0) * 1000;
         } else if (action === "pause") {
             state.timer.running = false;
-            state.timer.lastUpdatedAt = null;
+            state.timer.endAt = null;
         } else if (action === "reset") {
             state.timer.running = false;
             state.timer.remainingSeconds = state.timer.defaultSeconds;
-            state.timer.lastUpdatedAt = null;
+            state.timer.endAt = null;
         } else if (action === "set-length") {
             const parsedSeconds = Number(seconds);
 
@@ -368,7 +368,7 @@ app.post("/api/timer", (req, res) => {
             state.timer.defaultSeconds = Math.round(parsedSeconds);
             state.timer.remainingSeconds = state.timer.defaultSeconds;
             state.timer.running = false;
-            state.timer.lastUpdatedAt = null;
+            state.timer.endAt = null;
         } else {
             return res.status(400).json({ error: "Invalid timer action" });
         }
