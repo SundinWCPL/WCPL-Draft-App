@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WCPL Draft</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <main class="page">
+
+        <section class="top-row">
+            <div class="draft-board-card">
+
+    <div class="draft-header">
+        <img
+            src="images/wcpl-logo.png"
+            alt="WCPL Logo"
+            class="draft-logo"
+        >
+
+        <h1>Season 3 Draft</h1>
+		
+		<img
+            src="images/wcpl-logo.png"
+            alt="WCPL Logo"
+            class="draft-logo"
+        >
+    </div>
+
+    <div id="draftBoard"></div>
+
+</div>
+
+            <div class="current-pick-card">
+                <h2>Current Pick</h2>
+                <div id="currentTeam">Loading...</div>
+                <div id="currentPick">Pick #1</div>
+                <div class="timer">00:00</div>
+				<div class="timer-controls">
+    <button id="startPauseTimerButton">Start</button>
+    <button id="resetTimerButton">Reset</button>
+	<button id="setTimerLengthButton">Set Length</button>
+</div>
+				<div class="commish-buttons">
+    <button id="resetDraftButton">Reset Draft</button>
+    <button id="undoDraftButton">Undo Last Pick</button>
+    <button id="exportDraftButton">Export Results</button>
+</div>
+
+<div id="exportStatus" class="export-status" hidden></div>
+				<div class="role-controls">
+    <label for="roleSelect">Role</label>
+    <select id="roleSelect">
+        <option value="viewer">Viewer</option>
+        <option value="commish">Commissioner</option>
+        <option value="captain">Captain</option>
+    </select>
+
+    <select id="teamSelect" hidden></select>
+</div>
+            </div>
+        </section>
+
+<section class="player-search-card">
+    <div class="search-login-row">
+        <div>
+            <label for="playerSearch">Search Players</label>
+            <input id="playerSearch" type="text" placeholder="Start typing a player name...">
+        </div>
+
+        <div class="login-controls">
+            <span id="loginStatus">Viewer</span>
+            <button id="loginButton">Login</button>
+            <button id="logoutButton" hidden>Logout</button>
+        </div>
+    </div>
+
+    <div id="searchResults" class="search-results"></div>
+</section>
+
+        <section class="players-row">
+            <div class="player-column">
+                <h2>Skaters</h2>
+                <div id="skatersList" class="player-list"></div>
+            </div>
+
+            <div class="player-column">
+                <h2>Goalies</h2>
+                <div id="goaliesList" class="player-list"></div>
+            </div>
+
+            <div class="player-column">
+                <h2>Flex</h2>
+                <div id="flexList" class="player-list"></div>
+            </div>
+        </section>
+
+        <section class="selected-player-card">
+    <div class="selected-player-header">
+        <h2>Selected Player</h2>
+        <button id="draftButton" disabled>Draft Player</button>
+    </div>
+
+    <div id="selectedPlayer">
+        Click a player above to view details.
+    </div>
+</section>
+
+    </main>
+
+    <script src="app.js"></script>
+</body>
+</html>

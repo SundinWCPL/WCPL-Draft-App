@@ -1,0 +1,378 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #0a234f;
+    color: white;
+}
+
+.page {
+    padding: 10px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    overflow: hidden;
+}
+
+.top-row {
+    display: flex;
+    gap: 10px;
+    height: 34%;
+}
+
+.draft-board-card {
+    flex: 3;
+    background: white;
+    color: black;
+    padding: 15px;
+    overflow: auto;
+}
+
+.current-pick-card {
+    flex: 1;
+    background: white;
+    color: black;
+    padding: 15px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.timer {
+    font-size: 4rem;
+    margin-top: 20px;
+}
+
+.players-row {
+    display: flex;
+    gap: 10px;
+    height: 29%;
+}
+
+.player-column {
+    flex: 1;
+    background: white;
+    color: black;
+
+    display: flex;
+    flex-direction: column;
+}
+
+.player-column h2 {
+    margin: 0;
+    padding: 10px;
+    background: #6e9b3d;
+    color: white;
+}
+
+.player-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+}
+
+.player-item {
+    padding: 6px;
+    cursor: pointer;
+    border-bottom: 1px solid #ddd;
+}
+
+.player-item:hover {
+    background: #f0f0f0;
+}
+
+.selected-player-card {
+    flex: 1;
+    min-height: 0;
+    background: white;
+    color: black;
+    padding: 10px;
+    overflow: hidden;
+}
+
+.selected-player-card h2 {
+    margin: 0 0 6px 0;
+}
+
+#selectedPlayer p {
+    margin: 4px 0;
+}
+
+#draftButton {
+    margin-top: 8px;
+    padding: 8px 16px;
+}
+
+#draftButton {
+    margin-top: 15px;
+    padding: 10px 20px;
+}
+
+.draft-board-table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+    font-size: 0.9rem;
+}
+
+.draft-board-table th,
+.draft-board-table td {
+    border: 1px solid #333;
+    padding: 4px 6px;
+    text-align: center;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.draft-board-table th {
+    background: #6e9b3d;
+    color: white;
+}
+
+.draft-board-table th:nth-child(1),
+.draft-board-table td:nth-child(1) {
+    width: 20%;
+}
+
+.draft-board-table th:nth-child(2),
+.draft-board-table td:nth-child(2) {
+    width: 12%;
+}
+
+.draft-board-table th:nth-child(n+3),
+.draft-board-table td:nth-child(n+3) {
+    width: auto;
+}
+
+.team-cell {
+    text-align: left !important;
+    font-weight: bold;
+}
+
+.captain-cell {
+    font-size: 0.85rem;
+}
+
+.current-pick-row .team-cell,
+.current-pick-row .captain-cell {
+    background: yellow;
+    font-weight: bold;
+}
+
+.current-pick-cell {
+    background: yellow !important;
+    font-weight: bold;
+}
+
+.commish-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+}
+
+#resetDraftButton,
+#undoDraftButton {
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.announcement-highlight {
+    background: yellow !important;
+}
+
+.player-search-card {
+    background: white;
+    color: black;
+    padding: 10px;
+    position: relative;
+}
+
+.player-search-card label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+#playerSearch {
+    width: 300px;
+    padding: 8px;
+}
+
+.search-results {
+    position: absolute;
+    top: 45px;
+    left: 125px;
+    width: 300px;
+    background: white;
+    color: black;
+    z-index: 10;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.search-results.has-results {
+    border: 1px solid #ccc;
+}
+
+.search-result-item {
+    padding: 8px;
+    cursor: pointer;
+}
+
+.search-result-item:hover {
+    background: #f0f0f0;
+}
+
+.role-controls {
+    margin-top: 12px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.role-controls select {
+    padding: 6px;
+}
+
+.timer-controls {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.timer-controls button {
+    padding: 8px 12px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.selected-player-card {
+    overflow-y: auto;
+}
+
+.selected-player-summary {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.player-stats-grid {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.player-stats-grid > div {
+    flex: 1;
+}
+
+.player-stats-grid h3 {
+    margin: 6px 0;
+}
+
+.player-stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.player-stats-table th,
+.player-stats-table td {
+    border: 1px solid #ccc;
+    padding: 4px 6px;
+    text-align: center;
+}
+
+.player-stats-table th {
+    background: #6e9b3d;
+    color: white;
+}
+
+.player-stats-table td:first-child {
+    text-align: left;
+    font-weight: bold;
+}
+
+.selected-player-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 6px;
+}
+
+.selected-player-header h2 {
+    margin: 0;
+}
+
+#draftButton {
+    margin-top: 0;
+    padding: 6px 14px;
+}
+
+.drafted-player-link {
+    cursor: pointer;
+}
+
+.draft-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.draft-header h1 {
+    margin: 0;
+}
+
+.draft-logo {
+    height: 60px;
+    width: auto;
+}
+
+.search-login-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.login-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+#loginStatus {
+    font-weight: bold;
+}
+
+#loginButton,
+#logoutButton {
+    padding: 8px 14px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.role-controls {
+    display: none;
+}
+
+#exportDraftButton {
+    padding: 10px 20px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.export-status {
+    margin-top: 8px;
+    font-weight: bold;
+    color: #2e7d32;
+    text-align: center;
+}
