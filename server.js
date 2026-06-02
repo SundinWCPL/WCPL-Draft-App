@@ -19,8 +19,60 @@ const resultsExportPath = path.join(DATA_DIR, "draft_results.csv");
 function getInitialState() {
     return {
         draftedPicks: [],
-        currentPickIndex: 0
+        currentPickIndex: 0,
+        timer: {
+            defaultSeconds: 120,
+            remainingSeconds: 120,
+            running: false,
+            lastUpdatedAt: null
+        },
+        announcement: null
     };
+}
+
+function normalizeDraftState(state) {
+    const initial = getInitialState();
+
+    return {
+        ...initial,
+        ...state,
+        draftedPicks: Array.isArray(state?.draftedPicks) ? state.draftedPicks : [],
+        currentPickIndex: Number(state?.currentPickIndex || 0),
+        timer: {
+            ...initial.timer,
+            ...(state?.timer || {})
+        },
+        announcement: state?.announcement || null
+    };
+}
+
+function computeLiveState(state) {
+    const liveState = normalizeDraftState(state);
+    const now = Date.now();
+    const timer = liveState.timer;
+
+    if (liveState.announcement && liveState.announcement.until <= now) {
+        liveState.announcement = null;
+
+        if (liveState.currentPickIndex < readDraftOrderSync().length) {
+            timer.remainingSeconds = timer.defaultSeconds;
+            timer.running = true;
+            timer.lastUpdatedAt = now;
+        }
+    }
+
+    if (timer.running && timer.lastUpdatedAt) {
+        const elapsedSeconds = Math.floor((now - Number(timer.lastUpdatedAt)) / 1000);
+        timer.remainingSeconds = Math.max(0, Number(timer.remainingSeconds || 0) - elapsedSeconds);
+        timer.lastUpdatedAt = now;
+
+        if (timer.remainingSeconds <= 0) {
+            timer.running = false;
+            timer.remainingSeconds = 0;
+        }
+    }
+
+    return liveState;
 }
 
 function readDraftState() {
@@ -29,11 +81,32 @@ function readDraftState() {
     }
 
     const raw = fs.readFileSync(statePath, "utf8");
-    return JSON.parse(raw);
+    return computeLiveState(JSON.parse(raw));
 }
 
 function writeDraftState(state) {
-    fs.writeFileSync(statePath, JSON.stringify(state, null, 2));
+    fs.writeFileSync(statePath, JSON.stringify(normalizeDraftState(state), null, 2));
+}
+
+function readDraftOrderSync() {
+    const orderPath = path.join(APP_DATA_DIR, "draft_order.csv");
+
+    if (!fs.existsSync(orderPath)) return [];
+
+    const raw = fs.readFileSync(orderPath, "utf8").trim();
+    if (!raw) return [];
+
+    const [headerLine, ...lines] = raw.split(/\r?\n/);
+    const headers = headerLine.split(",").map(h => h.trim());
+
+    return lines.map(line => {
+        const values = line.split(",");
+        const row = {};
+        headers.forEach((header, index) => {
+            row[header] = values[index] || "";
+        });
+        return row;
+    });
 }
 
 app.use(express.static("public"));
@@ -200,14 +273,30 @@ app.post("/api/pick", async (req, res) => {
         state.currentPickIndex += 1;
 
         const draftOrder = await readCsv(path.join(APP_DATA_DIR, "draft_order.csv"));
+        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+        const team = teams.find(row => row.team_id === pick.team_id);
+
+        state.announcement = {
+            pick_number: pick.pick_number,
+            team_id: pick.team_id,
+            team_name: team?.team_name || pick.team_id || "Unknown Team",
+            player_name: pick.player_name || "",
+            until: Date.now() + 10000
+        };
+
+        state.timer.running = false;
+        state.timer.remainingSeconds = state.timer.defaultSeconds;
+        state.timer.lastUpdatedAt = null;
 
         if (state.currentPickIndex >= draftOrder.length) {
+            state.announcement = null;
+            state.timer.running = false;
             await writeDraftResultsExport(state);
         }
 
         writeDraftState(state);
 
-        res.json(state);
+        res.json(readDraftState());
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to save pick" });
@@ -237,13 +326,58 @@ app.post("/api/undo", (req, res) => {
             }
         }
 
+        state.announcement = null;
+        state.timer.running = false;
+        state.timer.remainingSeconds = state.timer.defaultSeconds;
+        state.timer.lastUpdatedAt = null;
+
         writeDraftState(state);
 
-        res.json(state);
+        res.json(readDraftState());
 
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to undo pick" });
+    }
+});
+
+app.post("/api/timer", (req, res) => {
+    try {
+        const state = readDraftState();
+        const { action, seconds } = req.body || {};
+        const now = Date.now();
+
+        if (action === "start") {
+            state.announcement = null;
+            state.timer.running = true;
+            state.timer.lastUpdatedAt = now;
+        } else if (action === "pause") {
+            state.timer.running = false;
+            state.timer.lastUpdatedAt = null;
+        } else if (action === "reset") {
+            state.timer.running = false;
+            state.timer.remainingSeconds = state.timer.defaultSeconds;
+            state.timer.lastUpdatedAt = null;
+        } else if (action === "set-length") {
+            const parsedSeconds = Number(seconds);
+
+            if (!Number.isFinite(parsedSeconds) || parsedSeconds <= 0) {
+                return res.status(400).json({ error: "Invalid timer length" });
+            }
+
+            state.timer.defaultSeconds = Math.round(parsedSeconds);
+            state.timer.remainingSeconds = state.timer.defaultSeconds;
+            state.timer.running = false;
+            state.timer.lastUpdatedAt = null;
+        } else {
+            return res.status(400).json({ error: "Invalid timer action" });
+        }
+
+        writeDraftState(state);
+        res.json(readDraftState());
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to update timer" });
     }
 });
 

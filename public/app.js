@@ -25,32 +25,63 @@ function renderTimer() {
         `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+function clearLocalTimerInterval() {
+    clearInterval(timerInterval);
+    timerInterval = null;
+}
+
+function setTimerFromState(timer = {}) {
+    timerDefaultSeconds = Number(timer.defaultSeconds || 120);
+    timerSeconds = Math.max(0, Number(timer.remainingSeconds ?? timerDefaultSeconds));
+    timerRunning = Boolean(timer.running);
+
+    document.querySelector("#startPauseTimerButton").textContent = timerRunning ? "Pause" : "Start";
+    renderTimer();
+
+    clearLocalTimerInterval();
+
+    if (timerRunning) {
+        timerInterval = setInterval(() => {
+            if (timerSeconds > 0) {
+                timerSeconds--;
+                renderTimer();
+            } else {
+                clearLocalTimerInterval();
+                timerRunning = false;
+                document.querySelector("#startPauseTimerButton").textContent = "Start";
+            }
+        }, 1000);
+    }
+}
+
+async function sendTimerAction(action, seconds = null) {
+    const response = await fetch("/api/timer", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ action, seconds })
+    });
+
+    if (!response.ok) {
+        alert("Failed to update timer.");
+        return;
+    }
+
+    const state = await response.json();
+    applyState(state, { forceRender: true });
+}
+
 function startTimer() {
-    if (timerRunning) return;
-
-    timerRunning = true;
-    document.querySelector("#startPauseTimerButton").textContent = "Pause";
-
-    timerInterval = setInterval(() => {
-        if (timerSeconds > 0) {
-            timerSeconds--;
-            renderTimer();
-        } else {
-            pauseTimer();
-        }
-    }, 1000);
+    return sendTimerAction("start");
 }
 
 function pauseTimer() {
-    clearInterval(timerInterval);
-    timerInterval = null;
-    timerRunning = false;
-    document.querySelector("#startPauseTimerButton").textContent = "Start";
+    return sendTimerAction("pause");
 }
 
 function resetTimerToDefault() {
-    timerSeconds = timerDefaultSeconds;
-    renderTimer();
+    return sendTimerAction("reset");
 }
 
 function populateRoleControls() {
@@ -101,15 +132,50 @@ allTeams = await teamsRes.json();
 draftOrder = await orderRes.json();
 
     const state = await stateRes.json();
-    draftedPicks = state.draftedPicks || [];
-    currentPickIndex = state.currentPickIndex || 0;
 
     renderDraftBoard();
     renderPlayers();
-    renderCurrentPick();
-	updatePermissions();
 	populateRoleControls();
-	renderTimer();
+    applyState(state, { forceRender: true });
+}
+
+function applyState(state, options = {}) {
+    const oldPickIndex = currentPickIndex;
+    const oldDraftedCount = draftedPicks.length;
+
+    draftedPicks = state.draftedPicks || [];
+    currentPickIndex = state.currentPickIndex || 0;
+
+    setTimerFromState(state.timer || {});
+
+    const announcement = state.announcement;
+
+    if (announcement && Number(announcement.until || 0) > Date.now()) {
+        renderPickAnnouncement(announcement);
+    } else {
+        announcementPickNumber = null;
+        document.querySelector(".current-pick-card").classList.remove("announcement-highlight");
+        renderCurrentPick();
+    }
+
+    if (options.forceRender || oldPickIndex !== currentPickIndex || oldDraftedCount !== draftedPicks.length) {
+        renderDraftBoard();
+        renderPlayers();
+    }
+
+    updatePermissions();
+}
+
+async function pollDraftState() {
+    try {
+        const response = await fetch("/api/state", { cache: "no-store" });
+        if (!response.ok) return;
+
+        const state = await response.json();
+        applyState(state);
+    } catch (err) {
+        console.warn("Failed to poll draft state", err);
+    }
 }
 
 function updatePermissions() {
@@ -297,7 +363,9 @@ function renderCurrentPick() {
     document.querySelector("#currentTeam").textContent = "Draft Complete";
     document.querySelector("#currentPick").textContent = "";
 
-    pauseTimer();
+    clearLocalTimerInterval();
+    timerRunning = false;
+    document.querySelector("#startPauseTimerButton").textContent = "Start";
 
     return;
 }
@@ -313,36 +381,21 @@ function renderCurrentPick() {
         `Round ${round}, ${ordinal(Number(currentPick.pick_number))} overall pick`;
 }
 
-function showPickAnnouncement(teamName, playerName, pickNumber) {
+function renderPickAnnouncement(announcement) {
     const currentPickCard = document.querySelector(".current-pick-card");
 
-    announcementPickNumber = pickNumber;
-	pauseTimer();
+    announcementPickNumber = announcement.pick_number;
 
-    document.querySelector("#currentTeam").textContent = teamName;
+    document.querySelector("#currentTeam").textContent = announcement.team_name || "Unknown Team";
     document.querySelector("#currentPick").textContent =
-        `Selects ${playerName} with the ${ordinal(Number(pickNumber))} overall pick.`;
+        `Selects ${announcement.player_name} with the ${ordinal(Number(announcement.pick_number))} overall pick.`;
 
     currentPickCard.classList.add("announcement-highlight");
-
-    renderDraftBoard();
-
-    if (announcementTimeout) {
-        clearTimeout(announcementTimeout);
-    }
-
-    announcementTimeout = setTimeout(() => {
-        announcementPickNumber = null;
-        currentPickCard.classList.remove("announcement-highlight");
-
-        renderCurrentPick();
-		updatePermissions();
-        renderDraftBoard();
-		if (currentPickIndex < draftOrder.length) {
-    resetTimerToDefault();
-    startTimer();
 }
-    }, 10000);
+
+function showPickAnnouncement() {
+    // Announcements are now shared through /api/state so every browser sees them.
+    pollDraftState();
 }
 
 function renderPlayers() {
@@ -522,9 +575,6 @@ if (!confirmed) return;
 
     const state = await response.json();
 
-    draftedPicks = state.draftedPicks || [];
-    currentPickIndex = state.currentPickIndex || 0;
-
     selectedPlayer = null;
 
     document.querySelector("#selectedPlayer").textContent =
@@ -532,14 +582,7 @@ if (!confirmed) return;
 
     document.querySelector("#draftButton").disabled = true;
 
-    renderDraftBoard();
-renderPlayers();
-showPickAnnouncement(
-    announcementTeamName,
-    announcementPlayerName,
-    announcementPickNumber
-);
-updatePermissions();
+    applyState(state, { forceRender: true });
 });
 
 document.querySelector("#resetDraftButton").addEventListener("click", async () => {
@@ -553,8 +596,6 @@ document.querySelector("#resetDraftButton").addEventListener("click", async () =
 
     const state = await response.json();
 
-    draftedPicks = state.draftedPicks || [];
-    currentPickIndex = state.currentPickIndex || 0;
     selectedPlayer = null;
 
     document.querySelector("#selectedPlayer").textContent =
@@ -562,10 +603,7 @@ document.querySelector("#resetDraftButton").addEventListener("click", async () =
 
     document.querySelector("#draftButton").disabled = true;
 
-    renderDraftBoard();
-    renderPlayers();
-    renderCurrentPick();
-	updatePermissions();
+    applyState(state, { forceRender: true });
 });
 
 document.querySelector("#undoDraftButton").addEventListener("click", async () => {
@@ -580,9 +618,6 @@ document.querySelector("#undoDraftButton").addEventListener("click", async () =>
 
     const state = await response.json();
 
-    draftedPicks = state.draftedPicks || [];
-    currentPickIndex = state.currentPickIndex || 0;
-
     selectedPlayer = null;
 
     document.querySelector("#selectedPlayer").textContent =
@@ -590,10 +625,7 @@ document.querySelector("#undoDraftButton").addEventListener("click", async () =>
 
     document.querySelector("#draftButton").disabled = true;
 
-    renderDraftBoard();
-    renderPlayers();
-    renderCurrentPick();
-	updatePermissions();
+    applyState(state, { forceRender: true });
 });
 
 document.querySelector("#playerSearch").addEventListener("input", () => {
@@ -666,15 +698,7 @@ document.querySelector("#setTimerLengthButton").addEventListener("click", () => 
         return;
     }
 
-    timerDefaultSeconds = Math.round(minutes * 60);
-    timerSeconds = timerDefaultSeconds;
-
-    clearInterval(timerInterval);
-    timerInterval = null;
-    timerRunning = false;
-
-    document.querySelector("#startPauseTimerButton").textContent = "Start";
-    renderTimer();
+    sendTimerAction("set-length", Math.round(minutes * 60));
 });
 
 document.querySelector("#loginButton").addEventListener("click", async () => {
@@ -740,3 +764,4 @@ document.querySelector("#exportDraftButton").addEventListener("click", async () 
 });
 
 loadData();
+setInterval(pollDraftState, 1000);

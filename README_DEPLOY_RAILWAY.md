@@ -69,3 +69,12 @@ On Windows PowerShell:
 $env:DATA_DIR = "./local_persist"
 npm start
 ```
+
+## Live viewer/captain update patch
+
+This version includes shared server-side timer state and automatic browser polling.
+
+- Browsers poll `/api/state` every 1 second.
+- Commissioner timer controls write to `/api/timer`.
+- The timer countdown is calculated on the server, so viewers/captains stay in sync.
+- Pick announcements are stored in shared state for 10 seconds, then the next pick timer starts automatically.
