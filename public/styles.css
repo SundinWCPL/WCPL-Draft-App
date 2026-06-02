@@ -173,17 +173,21 @@ body {
 
 .commish-buttons {
     display: flex;
-    gap: 10px;
-    margin-top: 15px;
+    gap: 4px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 #resetDraftButton,
-#undoDraftButton {
-    padding: 10px 20px;
+#undoDraftButton,
+#exportDraftButton,
+#tradePickButton {
+    padding: 4px 8px;
+    font-size: 0.75rem;
     font-weight: bold;
     cursor: pointer;
 }
-
 .announcement-highlight {
     background: yellow !important;
 }
@@ -364,12 +368,6 @@ body {
     display: none;
 }
 
-#exportDraftButton {
-    padding: 10px 20px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
 .export-status {
     margin-top: 8px;
     font-weight: bold;
@@ -378,27 +376,27 @@ body {
 }
 
 .trade-pick-controls {
-    margin-top: 10px;
+    margin-top: 4px;
     width: 100%;
     text-align: center;
 }
 
 .trade-pick-controls h3 {
-    margin: 6px 0;
-    font-size: 1rem;
-}
-
-.trade-pick-row {
-    display: flex;
-    gap: 6px;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
+    margin: 2px 0;
+    font-size: 0.8rem;
 }
 
 .trade-pick-row select {
-    padding: 6px;
-    max-width: 160px;
+    padding: 3px;
+    font-size: 0.75rem;
+    max-width: 140px;
+}
+
+.trade-pick-row button {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .trade-pick-row button {
