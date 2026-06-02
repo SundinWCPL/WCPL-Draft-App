@@ -1,11 +1,12 @@
 {
   "draftedPicks": [],
   "currentPickIndex": 0,
+  "pickTrades": {},
   "timer": {
     "defaultSeconds": 120,
     "remainingSeconds": 120,
-    "running": true,
-    "endAt": 1780407567017
+    "running": false,
+    "endAt": null
   },
   "announcement": null
 }

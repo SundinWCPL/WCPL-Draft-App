@@ -5,6 +5,7 @@ let allTeams = [];
 let draftOrder = [];
 let draftedPicks = [];
 let currentPickIndex = 0;
+let pickTrades = {};
 
 let announcementTimeout = null;
 let announcementPickNumber = null;
@@ -106,6 +107,88 @@ function ordinal(n) {
     return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
 }
 
+function getOriginalTeamId(pick) {
+    return pick?.original_team_id || pick?.team_id || "";
+}
+
+function getCurrentPickOwnerId(pick) {
+    const originalTeamId = getOriginalTeamId(pick);
+    const pickNumber = String(pick?.pick_number || "");
+    return pickTrades[pickNumber] || originalTeamId;
+}
+
+function getTeamById(teamId) {
+    return allTeams.find(team => team.team_id === teamId);
+}
+
+function getTeamName(teamId) {
+    const team = getTeamById(teamId);
+    return team ? team.team_name : teamId || "Unknown Team";
+}
+
+function formatPickOwnerLabel(pick) {
+    if (!pick) return "";
+
+    const originalTeamId = getOriginalTeamId(pick);
+    const currentTeamId = getCurrentPickOwnerId(pick);
+    const currentTeamName = getTeamName(currentTeamId);
+
+    if (currentTeamId && originalTeamId && currentTeamId !== originalTeamId) {
+        return `${currentTeamName} (from ${getTeamName(originalTeamId)})`;
+    }
+
+    return currentTeamName;
+}
+
+function isPickDrafted(pickNumber) {
+    return draftedPicks.some(pick =>
+        String(pick.pick_number) === String(pickNumber)
+    );
+}
+
+function getAvailableTradePicks() {
+    return draftOrder.filter(pick =>
+        !isPickDrafted(pick.pick_number)
+    );
+}
+
+function populateTradeControls() {
+    const tradePickSelect = document.querySelector("#tradePickSelect");
+    const tradeTeamSelect = document.querySelector("#tradeTeamSelect");
+
+    if (!tradePickSelect || !tradeTeamSelect) return;
+
+    const selectedPickNumber = tradePickSelect.value;
+
+    tradePickSelect.innerHTML = "";
+
+    getAvailableTradePicks().forEach(pick => {
+        const option = document.createElement("option");
+        option.value = pick.pick_number;
+        option.textContent = `Pick ${pick.pick_number} — ${formatPickOwnerLabel(pick)}`;
+        tradePickSelect.appendChild(option);
+    });
+
+    if (selectedPickNumber && [...tradePickSelect.options].some(option => option.value === selectedPickNumber)) {
+        tradePickSelect.value = selectedPickNumber;
+    }
+
+    const selectedTeamId = tradeTeamSelect.value;
+
+    tradeTeamSelect.innerHTML = "";
+
+    allTeams.forEach(team => {
+        const option = document.createElement("option");
+        option.value = team.team_id;
+        option.textContent = team.team_name;
+        tradeTeamSelect.appendChild(option);
+    });
+
+    if (selectedTeamId && [...tradeTeamSelect.options].some(option => option.value === selectedTeamId)) {
+        tradeTeamSelect.value = selectedTeamId;
+    }
+}
+
 async function loadData() {
 const [playersRes, statsRes, teamsRes, orderRes, stateRes] = await Promise.all([
     fetch("/api/players"),
@@ -131,9 +214,11 @@ draftOrder = await orderRes.json();
 function applyState(state, options = {}) {
     const oldPickIndex = currentPickIndex;
     const oldDraftedCount = draftedPicks.length;
+    const oldPickTradesJson = JSON.stringify(pickTrades || {});
 
     draftedPicks = state.draftedPicks || [];
     currentPickIndex = state.currentPickIndex || 0;
+    pickTrades = state.pickTrades || {};
 
     setTimerFromState(state.timer || {});
 
@@ -147,9 +232,12 @@ function applyState(state, options = {}) {
         renderCurrentPick();
     }
 
-    if (options.forceRender || oldPickIndex !== currentPickIndex || oldDraftedCount !== draftedPicks.length) {
+    const pickTradesChanged = oldPickTradesJson !== JSON.stringify(pickTrades || {});
+
+    if (options.forceRender || oldPickIndex !== currentPickIndex || oldDraftedCount !== draftedPicks.length || pickTradesChanged) {
         renderDraftBoard();
         renderPlayers();
+        populateTradeControls();
     }
 
     updatePermissions();
@@ -182,10 +270,11 @@ const exportStatus = document.querySelector("#exportStatus");
 	const draftComplete = !currentPick;
 
     const isCommish = currentRole === "commish";
+    const currentOwnerId = currentPick ? getCurrentPickOwnerId(currentPick) : "";
     const isCaptainOnClock =
         currentRole === "captain" &&
         currentPick &&
-        currentPick.team_id === currentCaptainTeamId;
+        currentOwnerId === currentCaptainTeamId;
 
     teamSelect.hidden = currentRole !== "captain";
 
@@ -195,6 +284,7 @@ const exportStatus = document.querySelector("#exportStatus");
     resetTimerButton.hidden = !isCommish;
 	setTimerLengthButton.hidden = !isCommish;
 	exportDraftButton.hidden = !isCommish;
+    if (tradePickControls) tradePickControls.hidden = !isCommish;
 
     if (draftComplete) {
     draftButton.hidden = true;
@@ -234,12 +324,12 @@ function renderDraftBoard() {
     const picksByTeam = {};
 
     draftOrder.forEach(pick => {
-        const teamId = pick.team_id;
+        const teamId = getCurrentPickOwnerId(pick);
         if (!picksByTeam[teamId]) picksByTeam[teamId] = [];
         picksByTeam[teamId].push(pick);
     });
 
-    const maxRounds = Math.max(...Object.values(picksByTeam).map(picks => picks.length));
+    const maxRounds = Math.max(1, ...Object.values(picksByTeam).map(picks => picks.length));
 
     let html = `
         <table class="draft-board-table">
@@ -264,18 +354,22 @@ allTeams.forEach(team => {
     const captainName = captain ? captain.name : team.captain_player_key || "";
     const teamPicks = picksByTeam[team.team_id] || [];
 
+    const currentPick = draftOrder[currentPickIndex];
+    const currentPickOwnerId = currentPick ? getCurrentPickOwnerId(currentPick) : "";
+
     const teamHasCurrentPick =
-    announcementPickNumber === null &&
-    currentPickIndex < draftOrder.length &&
-    teamPicks.some(pick =>
-        String(pick.pick_number) === String(draftOrder[currentPickIndex]?.pick_number)
-    );
+        announcementPickNumber === null &&
+        currentPick &&
+        currentPickOwnerId === team.team_id;
+
+const announcementPick = draftOrder.find(pick =>
+    String(pick.pick_number) === String(announcementPickNumber)
+);
 
 const teamHasAnnouncementPick =
     announcementPickNumber !== null &&
-    teamPicks.some(pick =>
-        String(pick.pick_number) === String(announcementPickNumber)
-    );
+    announcementPick &&
+    getCurrentPickOwnerId(announcementPick) === team.team_id;
 
 const rowClass = teamHasCurrentPick || teamHasAnnouncementPick
     ? "current-pick-row"
@@ -304,6 +398,9 @@ const isCurrentPick =
     String(teamPick?.pick_number) === String(draftOrder[currentPickIndex]?.pick_number);
 
 const cellClass = isAnnouncementPick || isCurrentPick ? "current-pick-cell" : "";
+const originalTeamId = getOriginalTeamId(teamPick);
+const currentOwnerId = teamPick ? getCurrentPickOwnerId(teamPick) : "";
+const isTraded = teamPick && originalTeamId && currentOwnerId && originalTeamId !== currentOwnerId;
 
     html += `
 <td class="${cellClass}">
@@ -313,7 +410,9 @@ const cellClass = isAnnouncementPick || isCurrentPick ? "current-pick-cell" : ""
                 data-player="${draftedPick.player_name}">
                 ${draftedPick.player_name}
                </span>`
-            : ""
+            : isTraded
+                ? `<span class="traded-pick-note">from ${getTeamName(originalTeamId)}</span>`
+                : ""
     }
 </td>`;
 }
@@ -359,12 +458,9 @@ function renderCurrentPick() {
     return;
 }
 
-    const currentTeam = allTeams.find(team => team.team_id === currentPick.team_id);
     const { round, pickInRound } = getRoundAndPick(currentPickIndex);
 
-    document.querySelector("#currentTeam").textContent = currentTeam
-        ? currentTeam.team_name
-        : "Unknown Team";
+    document.querySelector("#currentTeam").textContent = formatPickOwnerLabel(currentPick);
 
     document.querySelector("#currentPick").textContent =
         `Round ${round}, ${ordinal(Number(currentPick.pick_number))} overall pick`;
@@ -734,6 +830,56 @@ document.querySelector("#logoutButton").addEventListener("click", () => {
 
     updatePermissions();
 });
+
+
+document.querySelector("#tradePickButton").addEventListener("click", async () => {
+    const pickNumber = document.querySelector("#tradePickSelect").value;
+    const newTeamId = document.querySelector("#tradeTeamSelect").value;
+
+    if (!pickNumber || !newTeamId) {
+        alert("Choose a pick and a new owner.");
+        return;
+    }
+
+    const pick = draftOrder.find(row =>
+        String(row.pick_number) === String(pickNumber)
+    );
+
+    if (!pick) {
+        alert("Could not find that draft pick.");
+        return;
+    }
+
+    const currentLabel = formatPickOwnerLabel(pick);
+    const newTeamName = getTeamName(newTeamId);
+
+    const confirmed = confirm(
+        `Trade Pick ${pickNumber} from ${currentLabel} to ${newTeamName}?`
+    );
+
+    if (!confirmed) return;
+
+    const response = await fetch("/api/trade-pick", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            pick_number: pickNumber,
+            new_team_id: newTeamId
+        })
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        alert(error.error || "Failed to trade draft pick.");
+        return;
+    }
+
+    const state = await response.json();
+    applyState(state, { forceRender: true });
+});
+
 
 document.querySelector("#exportDraftButton").addEventListener("click", async () => {
     const response = await fetch("/api/export-results", {

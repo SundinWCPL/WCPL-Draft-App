@@ -376,3 +376,38 @@ body {
     color: #2e7d32;
     text-align: center;
 }
+
+.trade-pick-controls {
+    margin-top: 10px;
+    width: 100%;
+    text-align: center;
+}
+
+.trade-pick-controls h3 {
+    margin: 6px 0;
+    font-size: 1rem;
+}
+
+.trade-pick-row {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.trade-pick-row select {
+    padding: 6px;
+    max-width: 160px;
+}
+
+.trade-pick-row button {
+    padding: 7px 10px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.traded-pick-note {
+    font-size: 0.75rem;
+    font-weight: bold;
+}

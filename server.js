@@ -20,6 +20,7 @@ function getInitialState() {
     return {
         draftedPicks: [],
         currentPickIndex: 0,
+        pickTrades: {},
         timer: {
             defaultSeconds: 120,
             remainingSeconds: 120,
@@ -38,6 +39,9 @@ function normalizeDraftState(state) {
         ...state,
         draftedPicks: Array.isArray(state?.draftedPicks) ? state.draftedPicks : [],
         currentPickIndex: Number(state?.currentPickIndex || 0),
+        pickTrades: state?.pickTrades && typeof state.pickTrades === "object" && !Array.isArray(state.pickTrades)
+            ? state.pickTrades
+            : {},
         timer: {
             ...initial.timer,
             ...(state?.timer || {})
@@ -105,8 +109,26 @@ function readDraftOrderSync() {
         headers.forEach((header, index) => {
             row[header] = values[index] || "";
         });
+
+        row.original_team_id = row.original_team_id || row.team_id || "";
         return row;
     });
+}
+
+function getOriginalTeamId(pick) {
+    return pick?.original_team_id || pick?.team_id || "";
+}
+
+function getCurrentPickOwnerId(state, pick) {
+    const originalTeamId = getOriginalTeamId(pick);
+    const pickNumber = String(pick?.pick_number || "");
+    return state?.pickTrades?.[pickNumber] || originalTeamId;
+}
+
+function hasPickBeenDrafted(state, pickNumber) {
+    return (state?.draftedPicks || []).some(pick =>
+        String(pick.pick_number) === String(pickNumber)
+    );
 }
 
 app.use(express.static("public"));
@@ -135,23 +157,35 @@ function escapeCsv(value) {
 
 async function writeDraftResultsExport(state) {
     const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+    const draftOrder = readDraftOrderSync();
 
     const teamById = {};
     teams.forEach(team => {
         teamById[team.team_id] = team;
     });
 
+    const orderByPickNumber = {};
+    draftOrder.forEach(pick => {
+        orderByPickNumber[String(pick.pick_number)] = pick;
+    });
+
     const rows = [
-        ["pick_number", "team_id", "team_name", "player_name"]
+        ["pick_number", "original_team_id", "original_team_name", "team_id", "team_name", "player_name"]
     ];
 
     state.draftedPicks.forEach(pick => {
-        const team = teamById[pick.team_id] || {};
+        const orderPick = orderByPickNumber[String(pick.pick_number)] || {};
+        const originalTeamId = pick.original_team_id || getOriginalTeamId(orderPick);
+        const currentTeamId = pick.team_id || getCurrentPickOwnerId(state, orderPick);
+        const originalTeam = teamById[originalTeamId] || {};
+        const currentTeam = teamById[currentTeamId] || {};
 
         rows.push([
             pick.pick_number,
-            pick.team_id,
-            team.team_name || "",
+            originalTeamId,
+            originalTeam.team_name || "",
+            currentTeamId,
+            currentTeam.team_name || "",
             pick.player_name || ""
         ]);
     });
@@ -223,10 +257,9 @@ app.get("/api/teams", async (req, res) => {
     }
 });
 
-app.get("/api/order", async (req, res) => {
+app.get("/api/order", (req, res) => {
     try {
-        const order = await readCsv(path.join(APP_DATA_DIR, "draft_order.csv"));
-        res.json(order);
+        res.json(readDraftOrderSync());
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to read draft order file" });
@@ -262,6 +295,7 @@ app.post("/api/export-results", async (req, res) => {
 app.post("/api/pick", async (req, res) => {
     try {
         const state = readDraftState();
+        const draftOrder = readDraftOrderSync();
 
         const { pick } = req.body;
 
@@ -269,18 +303,38 @@ app.post("/api/pick", async (req, res) => {
             return res.status(400).json({ error: "Missing pick data" });
         }
 
-        state.draftedPicks.push(pick);
+        const currentPick = draftOrder[state.currentPickIndex];
+
+        if (!currentPick) {
+            return res.status(400).json({ error: "Draft is already complete" });
+        }
+
+        if (String(pick.pick_number) !== String(currentPick.pick_number)) {
+            return res.status(400).json({ error: "Pick number does not match the current pick" });
+        }
+
+        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+        const originalTeamId = getOriginalTeamId(currentPick);
+        const currentTeamId = getCurrentPickOwnerId(state, currentPick);
+        const team = teams.find(row => row.team_id === currentTeamId);
+
+        const savedPick = {
+            pick_number: currentPick.pick_number,
+            original_team_id: originalTeamId,
+            team_id: currentTeamId,
+            player_key: pick.player_key,
+            player_name: pick.player_name
+        };
+
+        state.draftedPicks.push(savedPick);
         state.currentPickIndex += 1;
 
-        const draftOrder = await readCsv(path.join(APP_DATA_DIR, "draft_order.csv"));
-        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
-        const team = teams.find(row => row.team_id === pick.team_id);
-
         state.announcement = {
-            pick_number: pick.pick_number,
-            team_id: pick.team_id,
-            team_name: team?.team_name || pick.team_id || "Unknown Team",
-            player_name: pick.player_name || "",
+            pick_number: savedPick.pick_number,
+            original_team_id: savedPick.original_team_id,
+            team_id: savedPick.team_id,
+            team_name: team?.team_name || savedPick.team_id || "Unknown Team",
+            player_name: savedPick.player_name || "",
             until: Date.now() + 10000
         };
 
@@ -300,6 +354,54 @@ app.post("/api/pick", async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to save pick" });
+    }
+});
+
+app.post("/api/trade-pick", async (req, res) => {
+    try {
+        const state = readDraftState();
+        const draftOrder = readDraftOrderSync();
+        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+
+        const { pick_number, new_team_id } = req.body || {};
+        const pickNumber = String(pick_number || "").trim();
+        const newTeamId = String(new_team_id || "").trim();
+
+        if (!pickNumber || !newTeamId) {
+            return res.status(400).json({ error: "Missing pick number or new team" });
+        }
+
+        const orderPick = draftOrder.find(pick =>
+            String(pick.pick_number) === pickNumber
+        );
+
+        if (!orderPick) {
+            return res.status(400).json({ error: "Draft pick not found" });
+        }
+
+        const newTeam = teams.find(team => team.team_id === newTeamId);
+
+        if (!newTeam) {
+            return res.status(400).json({ error: "New team not found" });
+        }
+
+        if (hasPickBeenDrafted(state, pickNumber)) {
+            return res.status(400).json({ error: "Cannot trade a pick that has already been made" });
+        }
+
+        const originalTeamId = getOriginalTeamId(orderPick);
+
+        if (newTeamId === originalTeamId) {
+            delete state.pickTrades[pickNumber];
+        } else {
+            state.pickTrades[pickNumber] = newTeamId;
+        }
+
+        writeDraftState(state);
+        res.json(readDraftState());
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to trade draft pick" });
     }
 });
 
