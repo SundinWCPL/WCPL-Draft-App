@@ -523,7 +523,7 @@ function getAvailablePlayers() {
 function addPlayerItem(listElement, player, isFlex) {
     const item = document.createElement("div");
     item.className = "player-item";
-    item.textContent = isFlex ? `${player.name} *` : player.name;
+    item.textContent = player.name;
 
     item.addEventListener("click", () => {
         selectPlayer(player);
