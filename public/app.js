@@ -266,7 +266,8 @@ function updatePermissions() {
     const resetTimerButton = document.querySelector("#resetTimerButton");
 	const setTimerLengthButton = document.querySelector("#setTimerLengthButton");
 	const exportDraftButton = document.querySelector("#exportDraftButton");
-const exportStatus = document.querySelector("#exportStatus");
+    const tradePickControls = document.querySelector("#tradePickControls");
+    const exportStatus = document.querySelector("#exportStatus");
 
     const currentPick = draftOrder[currentPickIndex];
 	const draftComplete = !currentPick;
@@ -639,17 +640,15 @@ document.querySelector("#draftButton").addEventListener("click", async () => {
     const currentPick = draftOrder[currentPickIndex];
     if (!currentPick) return;
 
+    const currentOwnerId = getCurrentPickOwnerId(currentPick);
     const pick = {
         pick_number: currentPick.pick_number,
-        team_id: currentPick.team_id,
+        team_id: currentOwnerId,
         player_key: selectedPlayer.player_key,
         player_name: selectedPlayer.name
     };
 	
-	const currentTeam = allTeams.find(team => team.team_id === currentPick.team_id);
-const announcementTeamName = currentTeam ? currentTeam.team_name : "Unknown Team";
-const announcementPlayerName = selectedPlayer.name;
-const announcementPickNumber = currentPick.pick_number;
+    const announcementTeamName = formatPickOwnerLabel(currentPick);
 const confirmed = confirm(
     `Draft ${selectedPlayer.name} to ${announcementTeamName} with the ${ordinal(Number(currentPick.pick_number))} overall pick?`
 );
