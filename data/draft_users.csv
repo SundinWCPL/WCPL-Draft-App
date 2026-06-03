@@ -2,7 +2,7 @@ role,team_id,display_name,password,enabled
 commish,,Commissioner,mushy,TRUE
 captain,Silly,Silly,Silly,TRUE
 captain,Foster,Foster,Foster,TRUE
-captain,Player,Player,Player,TRUE
+captain,Grab,Grab,Grab,TRUE
 captain,Marcus,Marcus,Marcus,TRUE
 captain,JB,JB,JB,TRUE
 captain,Nick,Nick,Nick,TRUE

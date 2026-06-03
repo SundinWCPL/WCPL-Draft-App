@@ -215,6 +215,7 @@ function applyState(state, options = {}) {
     const oldPickIndex = currentPickIndex;
     const oldDraftedCount = draftedPicks.length;
     const oldPickTradesJson = JSON.stringify(pickTrades || {});
+    const oldAnnouncementPickNumber = announcementPickNumber;
 
     draftedPicks = state.draftedPicks || [];
     currentPickIndex = state.currentPickIndex || 0;
@@ -233,8 +234,9 @@ function applyState(state, options = {}) {
     }
 
     const pickTradesChanged = oldPickTradesJson !== JSON.stringify(pickTrades || {});
+    const announcementChanged = String(oldAnnouncementPickNumber || "") !== String(announcementPickNumber || "");
 
-    if (options.forceRender || oldPickIndex !== currentPickIndex || oldDraftedCount !== draftedPicks.length || pickTradesChanged) {
+    if (options.forceRender || oldPickIndex !== currentPickIndex || oldDraftedCount !== draftedPicks.length || pickTradesChanged || announcementChanged) {
         renderDraftBoard();
         renderPlayers();
         populateTradeControls();
@@ -268,6 +270,7 @@ const exportStatus = document.querySelector("#exportStatus");
 
     const currentPick = draftOrder[currentPickIndex];
 	const draftComplete = !currentPick;
+    const announcementActive = Boolean(announcementPickNumber);
 
     const isCommish = currentRole === "commish";
     const currentOwnerId = currentPick ? getCurrentPickOwnerId(currentPick) : "";
@@ -301,7 +304,7 @@ const exportStatus = document.querySelector("#exportStatus");
 exportStatus.hidden = true;
 exportStatus.textContent = "";
 
-if (!selectedPlayer) {
+if (!selectedPlayer || announcementActive) {
         draftButton.disabled = true;
         draftButton.hidden = currentRole === "viewer";
         return;
@@ -501,8 +504,6 @@ function renderPlayers() {
             const isFlex = position.includes("skater") && position.includes("goalie");
 
             if (isFlex) {
-                addPlayerItem(skatersList, player, true);
-                addPlayerItem(goaliesList, player, true);
                 addPlayerItem(flexList, player, true);
             } else if (position.includes("goalie")) {
                 addPlayerItem(goaliesList, player, false);
@@ -630,6 +631,11 @@ function selectPlayer(player) {
 document.querySelector("#draftButton").addEventListener("click", async () => {
     if (!selectedPlayer) return;
 
+    if (announcementPickNumber) {
+        alert("Please wait for the current pick announcement to finish.");
+        return;
+    }
+
     const currentPick = draftOrder[currentPickIndex];
     if (!currentPick) return;
 
@@ -657,6 +663,12 @@ if (!confirmed) return;
         },
         body: JSON.stringify({ pick })
     });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        alert(error.error || "Failed to make pick.");
+        return;
+    }
 
     const state = await response.json();
 

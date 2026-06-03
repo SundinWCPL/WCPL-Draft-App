@@ -303,6 +303,10 @@ app.post("/api/pick", async (req, res) => {
             return res.status(400).json({ error: "Missing pick data" });
         }
 
+        if (state.announcement && Number(state.announcement.until || 0) > Date.now()) {
+            return res.status(409).json({ error: "Please wait for the current pick announcement to finish." });
+        }
+
         const currentPick = draftOrder[state.currentPickIndex];
 
         if (!currentPick) {
