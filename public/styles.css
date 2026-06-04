@@ -594,12 +594,12 @@ body {
 }
 
 #mockRoom .current-team-logo-wrap {
-    min-height: 48px;
+    min-height: 70px;
 }
 
 #mockRoom .current-team-logo {
-    width: 48px;
-    height: 48px;
+    width: 70px;
+    height: 70px;
 }
 
 #mockRoom .current-team-name {

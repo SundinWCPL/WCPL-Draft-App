@@ -752,6 +752,14 @@ function chooseAiPlayer(state, teamId, pickIndex) {
         pool = pool.filter(player => getPlayerPositionType(player).isGoalie);
     } else if (forcedRole === "S") {
         pool = pool.filter(player => getPlayerPositionType(player).isSkater);
+    } else if (teamCounts.goalies >= 1 && currentRound < 6) {
+        // Once an AI team already has its starter, avoid drafting a backup goalie
+        // until Round 6 or later. Hard roster rules above can still force a goalie
+        // when needed to finish with 2 total goalies.
+        const skaterPool = pool.filter(player => getPlayerPositionType(player).isSkater);
+        if (skaterPool.length > 0) {
+            pool = skaterPool;
+        }
     }
 
     if (pool.length === 0) return null;
