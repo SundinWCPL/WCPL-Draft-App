@@ -409,3 +409,42 @@ body {
     font-size: 0.75rem;
     font-weight: bold;
 }
+
+
+.team-name-with-logo {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+}
+
+.team-logo {
+    object-fit: contain;
+    flex: 0 0 auto;
+}
+
+.team-logo-board {
+    width: 22px;
+    height: 22px;
+}
+
+.current-team-heading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    line-height: 1.15;
+}
+
+.current-team-logo {
+    width: 42px;
+    height: 42px;
+}
+
+.team-cell {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.current-pick-card {
+    transition: background-color 0.2s ease, color 0.2s ease;
+}

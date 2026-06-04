@@ -126,6 +126,75 @@ function getTeamName(teamId) {
     return team ? team.team_name : teamId || "Unknown Team";
 }
 
+function escapeHtml(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+function normalizeColor(value, fallback) {
+    const text = String(value || "").trim();
+    return /^#[0-9A-Fa-f]{6}$/.test(text) ? text : fallback;
+}
+
+function getTeamLogoPath(teamId) {
+    return teamId ? `images/team_logos/${teamId}.png` : "";
+}
+
+function getTeamBgColor(team) {
+    return normalizeColor(team?.bg_color, "#ffffff");
+}
+
+function getTeamTextColor(team) {
+    return normalizeColor(team?.text_color, "#000000");
+}
+
+function renderTeamLogo(teamId, className = "team-logo") {
+    if (!teamId) return "";
+    return `<img src="${getTeamLogoPath(teamId)}" alt="" class="${className}" onerror="this.style.display='none'">`;
+}
+
+function renderTeamNameWithLogo(team) {
+    if (!team) return "Unknown Team";
+
+    return `
+        <span class="team-name-with-logo">
+            ${renderTeamLogo(team.team_id, "team-logo team-logo-board")}
+            <span>${escapeHtml(team.team_name)}</span>
+        </span>
+    `;
+}
+
+function renderCurrentTeamHeading(team, labelText) {
+    if (!team) return escapeHtml(labelText || "Unknown Team");
+
+    return `
+        <span class="current-team-heading">
+            ${renderTeamLogo(team.team_id, "team-logo current-team-logo")}
+            <span>${escapeHtml(labelText || team.team_name)}</span>
+            ${renderTeamLogo(team.team_id, "team-logo current-team-logo")}
+        </span>
+    `;
+}
+
+function setCurrentPickTeamStyle(team) {
+    const currentPickCard = document.querySelector(".current-pick-card");
+
+    if (!currentPickCard) return;
+
+    if (!team) {
+        currentPickCard.style.backgroundColor = "";
+        currentPickCard.style.color = "";
+        return;
+    }
+
+    currentPickCard.style.backgroundColor = getTeamBgColor(team);
+    currentPickCard.style.color = getTeamTextColor(team);
+}
+
 function formatPickOwnerLabel(pick) {
     if (!pick) return "";
 
@@ -379,9 +448,11 @@ const rowClass = teamHasCurrentPick || teamHasAnnouncementPick
     ? "current-pick-row"
     : "";
 
+const teamCellStyle = `background-color: ${getTeamBgColor(team)}; color: ${getTeamTextColor(team)};`;
+
 html += `
     <tr class="${rowClass}">
-        <td class="team-cell">${team.team_name}</td>
+        <td class="team-cell" style="${teamCellStyle}">${renderTeamNameWithLogo(team)}</td>
         <td class="captain-cell">${captainName}</td>
 `;
 
@@ -452,6 +523,7 @@ function renderCurrentPick() {
     currentPickCard.classList.remove("announcement-highlight");
 
     if (!currentPick) {
+    setCurrentPickTeamStyle(null);
     document.querySelector("#currentTeam").textContent = "Draft Complete";
     document.querySelector("#currentPick").textContent = "";
 
@@ -463,8 +535,12 @@ function renderCurrentPick() {
 }
 
     const { round, pickInRound } = getRoundAndPick(currentPickIndex);
+    const currentOwnerId = getCurrentPickOwnerId(currentPick);
+    const currentTeam = getTeamById(currentOwnerId);
+    const ownerLabel = formatPickOwnerLabel(currentPick);
 
-    document.querySelector("#currentTeam").textContent = formatPickOwnerLabel(currentPick);
+    setCurrentPickTeamStyle(currentTeam);
+    document.querySelector("#currentTeam").innerHTML = renderCurrentTeamHeading(currentTeam, ownerLabel);
 
     document.querySelector("#currentPick").textContent =
         `Round ${round}, ${ordinal(Number(currentPick.pick_number))} overall pick`;
@@ -475,7 +551,10 @@ function renderPickAnnouncement(announcement) {
 
     announcementPickNumber = announcement.pick_number;
 
-    document.querySelector("#currentTeam").textContent = announcement.team_name || "Unknown Team";
+    const announcementTeam = getTeamById(announcement.team_id);
+    setCurrentPickTeamStyle(announcementTeam);
+    document.querySelector("#currentTeam").innerHTML =
+        renderCurrentTeamHeading(announcementTeam, announcement.team_name || "Unknown Team");
     document.querySelector("#currentPick").textContent =
         `Selects ${announcement.player_name} with the ${ordinal(Number(announcement.pick_number))} overall pick.`;
 
