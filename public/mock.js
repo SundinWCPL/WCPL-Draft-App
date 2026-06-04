@@ -7,6 +7,7 @@ let draftedPicks = [];
 let currentPickIndex = 0;
 let pickTrades = {};
 let claimedTeams = {};
+let userNames = {};
 let started = false;
 let announcementPickNumber = null;
 let aiDueAt = null;
@@ -186,12 +187,13 @@ function applyState(state, options = {}) {
     const oldPickIndex = currentPickIndex;
     const oldDraftedCount = draftedPicks.length;
     const oldAnnouncementPickNumber = announcementPickNumber;
-    const oldClaimsJson = JSON.stringify(claimedTeams || {});
+    const oldClaimsJson = JSON.stringify({ claimedTeams: claimedTeams || {}, userNames: userNames || {} });
 
     draftedPicks = state.draftedPicks || [];
     currentPickIndex = Number(state.currentPickIndex || 0);
     pickTrades = state.pickTrades || {};
     claimedTeams = state.claimedTeams || {};
+    userNames = state.userNames || {};
     started = Boolean(state.started);
     aiDueAt = state.aiDueAt || null;
 
@@ -205,7 +207,7 @@ function applyState(state, options = {}) {
         renderCurrentPick();
     }
 
-    const claimsChanged = oldClaimsJson !== JSON.stringify(claimedTeams || {});
+    const claimsChanged = oldClaimsJson !== JSON.stringify({ claimedTeams: claimedTeams || {}, userNames: userNames || {} });
     const announcementChanged = String(oldAnnouncementPickNumber || "") !== String(announcementPickNumber || "");
 
     if (options.forceRender || oldPickIndex !== currentPickIndex || oldDraftedCount !== draftedPicks.length || claimsChanged || announcementChanged) {
@@ -232,6 +234,31 @@ function getControlledTeamIds() {
 
 function getControlledTeamId() {
     return getControlledTeamIds()[0] || "";
+}
+
+function getUserDisplayName(userIdValue) {
+    return userNames?.[userIdValue] || "Human";
+}
+
+function getOrPromptDisplayName() {
+    if (userNames?.[userId]) return userNames[userId];
+
+    const existing = localStorage.getItem(`wcpl_mock_display_name_${roomCode}`)
+        || localStorage.getItem("wcpl_mock_display_name")
+        || "";
+
+    const input = prompt("Enter your name for this mock room:", existing);
+    if (input === null) return "";
+
+    const name = input.trim();
+    if (!name) {
+        alert("Please enter a name before controlling a team.");
+        return "";
+    }
+
+    localStorage.setItem(`wcpl_mock_display_name_${roomCode}`, name);
+    localStorage.setItem("wcpl_mock_display_name", name);
+    return name;
 }
 
 function renderDraftBoard() {
@@ -267,10 +294,11 @@ function renderDraftBoard() {
         const teamCellStyle = `background-color: ${getTeamBgColor(team)}; color: ${getTeamTextColor(team)};`;
         const claimedBy = claimedTeams[team.team_id];
         const controlledByMe = claimedBy === userId;
-        const claimLabel = controlledByMe ? "You Control" : claimedBy ? "Controlled" : "Control Team";
+        const claimedName = claimedBy ? getUserDisplayName(claimedBy) : "";
+        const claimLabel = controlledByMe ? "Release Team" : claimedBy ? `Controlled by ${escapeHtml(claimedName)}` : "Control Team";
         const claimButton = !started
             ? `<button class="control-team-button" data-team="${team.team_id}" ${claimedBy && !controlledByMe ? "disabled" : ""}>${claimLabel}</button>`
-            : `<span class="control-team-status">${controlledByMe ? "You" : claimedBy ? "Human" : "AI"}</span>`;
+            : `<span class="control-team-status">${controlledByMe ? "You" : claimedBy ? `Controlled by ${escapeHtml(claimedName)}` : "AI"}</span>`;
 
         html += `<tr class="${rowClass}"><td class="team-cell mock-team-cell" style="${teamCellStyle}"><div class="mock-team-cell-row"><div class="mock-team-cell-name">${renderTeamNameWithLogo(team)}</div><div class="mock-team-cell-control">${claimButton}</div></div></td><td class="captain-cell">${escapeHtml(captainName)}</td>`;
 
@@ -324,7 +352,7 @@ function renderCurrentPick() {
     if (!started) status.textContent = "Claim teams, then start the draft.";
     else if (!claimedTeams[ownerId]) status.textContent = aiDueAt ? "AI is thinking..." : "AI controlled team.";
     else if (claimedTeams[ownerId] === userId) status.textContent = "Your pick.";
-    else status.textContent = "Waiting for another user.";
+    else status.textContent = `Waiting for ${getUserDisplayName(claimedTeams[ownerId])}.`;
 }
 
 function renderPickAnnouncement(announcement) {
@@ -433,10 +461,15 @@ function joinRoom() {
 }
 
 async function claimTeam(teamId) {
+    const alreadyControlledByMe = claimedTeams?.[teamId] === userId;
+    const displayName = alreadyControlledByMe ? "" : getOrPromptDisplayName();
+
+    if (!alreadyControlledByMe && !displayName) return;
+
     const response = await fetch(`/api/mock/${roomCode}/claim-team`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ team_id: teamId, user_id: userId })
+        body: JSON.stringify({ team_id: teamId, user_id: userId, display_name: displayName })
     });
     if (!response.ok) {
         const error = await response.json().catch(() => ({}));

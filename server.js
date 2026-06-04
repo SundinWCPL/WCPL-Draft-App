@@ -567,6 +567,7 @@ function getInitialMockState(roomCode) {
         roomCode,
         started: false,
         claimedTeams: {},
+        userNames: {},
         draftedPicks: [],
         currentPickIndex: 0,
         pickTrades: {},
@@ -590,6 +591,9 @@ function normalizeMockState(state, roomCode) {
         started: Boolean(state?.started),
         claimedTeams: state?.claimedTeams && typeof state.claimedTeams === "object" && !Array.isArray(state.claimedTeams)
             ? state.claimedTeams
+            : {},
+        userNames: state?.userNames && typeof state.userNames === "object" && !Array.isArray(state.userNames)
+            ? state.userNames
             : {},
         draftedPicks: Array.isArray(state?.draftedPicks) ? state.draftedPicks : [],
         currentPickIndex: Number(state?.currentPickIndex || 0),
@@ -907,19 +911,37 @@ app.post("/api/mock/:roomCode/claim-team", (req, res) => {
         if (!state) return res.status(404).json({ error: "Mock room not found" });
         if (state.started) return res.status(400).json({ error: "Draft has already started" });
 
-        const { team_id, user_id } = req.body || {};
+        const { team_id, user_id, display_name } = req.body || {};
         const teamId = String(team_id || "").trim();
         const userId = String(user_id || "").trim();
+        const displayName = String(display_name || "").trim().slice(0, 40);
         const teams = readCsvSync(path.join(APP_DATA_DIR, "draft_teams.csv"));
 
         if (!teamId || !userId) return res.status(400).json({ error: "Missing team or user" });
         if (!teams.some(team => team.team_id === teamId)) return res.status(400).json({ error: "Team not found" });
 
-        if (state.claimedTeams[teamId] && state.claimedTeams[teamId] !== userId) {
-            return res.status(409).json({ error: "That team is already controlled" });
+        if (!state.userNames || typeof state.userNames !== "object" || Array.isArray(state.userNames)) {
+            state.userNames = {};
         }
 
-        state.claimedTeams[teamId] = userId;
+        if (displayName) {
+            state.userNames[userId] = displayName;
+        }
+
+        if (state.claimedTeams[teamId] === userId) {
+            delete state.claimedTeams[teamId];
+        } else {
+            if (state.claimedTeams[teamId] && state.claimedTeams[teamId] !== userId) {
+                return res.status(409).json({ error: "That team is already controlled" });
+            }
+
+            if (!state.userNames[userId]) {
+                return res.status(400).json({ error: "Missing display name" });
+            }
+
+            state.claimedTeams[teamId] = userId;
+        }
+
         writeMockState(roomCode, state);
         res.json(readMockState(roomCode));
     } catch (err) {
