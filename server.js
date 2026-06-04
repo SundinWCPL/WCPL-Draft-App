@@ -734,7 +734,7 @@ function chooseAiPlayer(state, teamId, pickIndex) {
 
     let forcedRole = null;
 
-    if (teamCounts.goalies === 0 && currentRound >= 3) {
+    if (teamCounts.goalies === 0 && currentRound >= 4) {
         forcedRole = "G";
     } else if (requiredGoaliesRemaining > 0 && picksRemainingIncludingThis <= requiredGoaliesRemaining) {
         forcedRole = "G";
