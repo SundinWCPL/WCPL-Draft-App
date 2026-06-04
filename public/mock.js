@@ -226,8 +226,12 @@ async function pollDraftState() {
     }
 }
 
+function getControlledTeamIds() {
+    return Object.keys(claimedTeams).filter(teamId => claimedTeams[teamId] === userId);
+}
+
 function getControlledTeamId() {
-    return Object.keys(claimedTeams).find(teamId => claimedTeams[teamId] === userId) || "";
+    return getControlledTeamIds()[0] || "";
 }
 
 function renderDraftBoard() {
@@ -398,11 +402,13 @@ function updatePermissions() {
     const currentPick = draftOrder[currentPickIndex];
     const ownerId = currentPick ? getCurrentPickOwnerId(currentPick) : "";
     const announcementActive = Boolean(announcementPickNumber);
-    const controlledTeamId = getControlledTeamId();
-    const controlledTeam = getTeamById(controlledTeamId);
+    const controlledTeamIds = getControlledTeamIds();
+    const controlledTeamNames = controlledTeamIds
+        .map(teamId => getTeamById(teamId)?.team_name)
+        .filter(Boolean);
 
-    document.querySelector("#controlledTeamLabel").textContent = controlledTeam
-        ? `You control: ${controlledTeam.team_name}`
+    document.querySelector("#controlledTeamLabel").textContent = controlledTeamNames.length
+        ? `You control: ${controlledTeamNames.join(", ")}`
         : "You control: none";
 
     startButton.hidden = started;

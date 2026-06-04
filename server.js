@@ -666,7 +666,12 @@ function getTeamRosterCounts(teamId, state, playersByName, teamById) {
 }
 
 function weightedRandomPick(candidates) {
-    const weights = candidates.map(player => Math.max(0.001, Number(player.draft_stock || 0)));
+    const rankMultipliers = [1, 0.66, 0.33];
+    const weights = candidates.map((player, index) => {
+        const stock = Math.max(0.001, Number(player.draft_stock || 0));
+        return stock * (rankMultipliers[index] || 0.001);
+    });
+
     const total = weights.reduce((sum, weight) => sum + weight, 0);
     let roll = Math.random() * total;
 
@@ -769,7 +774,7 @@ function makeMockPick(state, currentPick, selectedPlayer, teamId, draftedBy = "h
         team_name: team?.team_name || savedPick.team_id || "Unknown Team",
         player_name: savedPick.player_name || "",
         drafted_by: draftedBy,
-        until: Date.now() + 10000
+        until: Date.now() + 5000
     };
     state.aiDueAt = null;
     state.timer.running = false;
@@ -887,12 +892,6 @@ app.post("/api/mock/:roomCode/claim-team", (req, res) => {
 
         if (!teamId || !userId) return res.status(400).json({ error: "Missing team or user" });
         if (!teams.some(team => team.team_id === teamId)) return res.status(400).json({ error: "Team not found" });
-
-        Object.keys(state.claimedTeams).forEach(existingTeamId => {
-            if (state.claimedTeams[existingTeamId] === userId) {
-                delete state.claimedTeams[existingTeamId];
-            }
-        });
 
         if (state.claimedTeams[teamId] && state.claimedTeams[teamId] !== userId) {
             return res.status(409).json({ error: "That team is already controlled" });
@@ -1016,10 +1015,29 @@ app.post("/api/mock/:roomCode/undo", (req, res) => {
         }
 
         state.announcement = null;
-        state.aiDueAt = null;
+
+        const draftOrder = readDraftOrderSync();
+        const currentPick = draftOrder[state.currentPickIndex];
+        const currentOwnerId = currentPick ? getCurrentPickOwnerId(state, currentPick) : "";
+
         state.timer.running = false;
         state.timer.remainingSeconds = state.timer.defaultSeconds;
         state.timer.endAt = null;
+
+        // If undo puts an AI-controlled team back on the clock, schedule the AI again.
+        // If it puts a human-controlled team back on the clock, restart that pick's timer.
+        if (state.started && currentPick) {
+            if (state.claimedTeams[currentOwnerId]) {
+                state.aiDueAt = null;
+                state.timer.running = true;
+                state.timer.endAt = Date.now() + Number(state.timer.defaultSeconds || 0) * 1000;
+            } else {
+                state.aiDueAt = Date.now() + 5000;
+            }
+        } else {
+            state.aiDueAt = null;
+        }
+
         writeMockState(roomCode, state);
         res.json(readMockState(roomCode));
     } catch (err) {

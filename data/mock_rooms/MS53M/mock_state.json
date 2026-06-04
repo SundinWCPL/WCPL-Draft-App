@@ -1,0 +1,16 @@
+{
+  "roomCode": "MS53M",
+  "started": false,
+  "claimedTeams": {},
+  "draftedPicks": [],
+  "currentPickIndex": 0,
+  "pickTrades": {},
+  "timer": {
+    "defaultSeconds": 120,
+    "remainingSeconds": 120,
+    "running": false,
+    "endAt": null
+  },
+  "announcement": null,
+  "aiDueAt": null
+}
