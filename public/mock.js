@@ -272,7 +272,7 @@ function renderDraftBoard() {
             ? `<button class="control-team-button" data-team="${team.team_id}" ${claimedBy && !controlledByMe ? "disabled" : ""}>${claimLabel}</button>`
             : `<span class="control-team-status">${controlledByMe ? "You" : claimedBy ? "Human" : "AI"}</span>`;
 
-        html += `<tr class="${rowClass}"><td class="team-cell" style="${teamCellStyle}">${renderTeamNameWithLogo(team)}${claimButton}</td><td class="captain-cell">${escapeHtml(captainName)}</td>`;
+        html += `<tr class="${rowClass}"><td class="team-cell mock-team-cell" style="${teamCellStyle}"><div class="mock-team-cell-row"><div class="mock-team-cell-name">${renderTeamNameWithLogo(team)}</div><div class="mock-team-cell-control">${claimButton}</div></div></td><td class="captain-cell">${escapeHtml(captainName)}</td>`;
 
         for (let i = 0; i < maxRounds; i++) {
             const teamPick = teamPicks[i];

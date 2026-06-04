@@ -678,3 +678,44 @@ body {
 #mockRoom .player-stats-table {
     font-size: 0.75rem;
 }
+
+
+/* Mock draft team cell: keep Control Team button on the same line as the team name. */
+#mockRoom .mock-team-cell {
+    padding: 3px 6px;
+}
+
+#mockRoom .mock-team-cell-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+}
+
+#mockRoom .mock-team-cell-name {
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    overflow: hidden;
+}
+
+#mockRoom .mock-team-cell-name .team-name-with-logo {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+#mockRoom .mock-team-cell-control {
+    flex: 0 0 auto;
+}
+
+#mockRoom .control-team-button,
+#mockRoom .control-team-status {
+    margin-left: 0;
+    padding: 2px 6px;
+    font-size: 0.65rem;
+    line-height: 1.1;
+}
