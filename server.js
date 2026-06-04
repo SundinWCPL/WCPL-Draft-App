@@ -618,9 +618,23 @@ function writeMockState(roomCode, state) {
 }
 
 function getPlayerPositionType(player) {
-    const text = String(player?.position || "").toLowerCase();
+    // For mock-draft AI roster logic, use the first listed preferred position
+    // as the player's primary role. This prevents flex players from being
+    // counted as both skaters and goalies. Example: "Goalie, Defense" => goalie;
+    // "Forward, Goalie" => skater. Fall back to position only if pref_pos is blank.
+    const preferredText = String(player?.pref_pos || "")
+        .split(",")[0]
+        .trim()
+        .toLowerCase();
+
+    const fallbackText = String(player?.position || "")
+        .trim()
+        .toLowerCase();
+
+    const text = preferredText || fallbackText;
     const isGoalie = text.includes("goalie") || text === "g";
-    const isSkater = text.includes("skater") || text === "s" || (!isGoalie && !text.includes("goalie"));
+    const isSkater = !isGoalie;
+
     return { isSkater, isGoalie };
 }
 
@@ -666,7 +680,7 @@ function getTeamRosterCounts(teamId, state, playersByName, teamById) {
 }
 
 function weightedRandomPick(candidates) {
-    const rankMultipliers = [1, 0.66, 0.33];
+    const rankMultipliers = [1, 0.8, 0.5];
     const weights = candidates.map((player, index) => {
         const stock = Math.max(0.001, Number(player.draft_stock || 0));
         return stock * (rankMultipliers[index] || 0.001);
