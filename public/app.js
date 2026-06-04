@@ -558,7 +558,7 @@ function renderPickAnnouncement(announcement) {
     document.querySelector("#currentPick").textContent =
         `Selects ${announcement.player_name} with the ${ordinal(Number(announcement.pick_number))} overall pick.`;
 
-    currentPickCard.classList.add("announcement-highlight");
+    // Keep the current pick card in team colors during the announcement; only the draft board highlights.
 }
 
 function showPickAnnouncement() {

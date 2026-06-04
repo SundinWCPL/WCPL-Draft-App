@@ -342,8 +342,10 @@ app.post("/api/pick", async (req, res) => {
             until: Date.now() + 10000
         };
 
+        // Freeze the clock at the time the pick was made during the 10-second announcement.
+        // computeLiveState() will reset/start the next pick timer when the announcement ends.
         state.timer.running = false;
-        state.timer.remainingSeconds = state.timer.defaultSeconds;
+        state.timer.remainingSeconds = Math.max(0, Number(state.timer.remainingSeconds || 0));
         state.timer.endAt = null;
 
         if (state.currentPickIndex >= draftOrder.length) {
