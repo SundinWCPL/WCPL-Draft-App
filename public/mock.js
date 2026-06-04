@@ -80,7 +80,7 @@ function renderTeamNameWithLogo(team) {
 
 function renderCurrentTeamHeading(team, labelText) {
     if (!team) return escapeHtml(labelText || "Unknown Team");
-    return `<span class="current-team-heading">${renderTeamLogo(team.team_id, "team-logo current-team-logo")}<span>${escapeHtml(labelText || team.team_name)}</span>${renderTeamLogo(team.team_id, "team-logo current-team-logo")}</span>`;
+    return `<span class="current-team-heading"><span class="current-team-logo-wrap">${renderTeamLogo(team.team_id, "team-logo current-team-logo")}</span><span class="current-team-name">${escapeHtml(labelText || team.team_name)}</span></span>`;
 }
 
 function setCurrentPickTeamStyle(team) {

@@ -173,9 +173,10 @@ function renderCurrentTeamHeading(team, labelText) {
 
     return `
         <span class="current-team-heading">
-            ${renderTeamLogo(team.team_id, "team-logo current-team-logo")}
-            <span>${escapeHtml(labelText || team.team_name)}</span>
-            ${renderTeamLogo(team.team_id, "team-logo current-team-logo")}
+            <span class="current-team-logo-wrap">
+                ${renderTeamLogo(team.team_id, "team-logo current-team-logo")}
+            </span>
+            <span class="current-team-name">${escapeHtml(labelText || team.team_name)}</span>
         </span>
     `;
 }

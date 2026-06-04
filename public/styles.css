@@ -430,15 +430,29 @@ body {
 
 .current-team-heading {
     display: flex;
+    flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 10px;
+    gap: 4px;
     line-height: 1.15;
 }
 
+.current-team-logo-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 78px;
+}
+
 .current-team-logo {
-    width: 42px;
-    height: 42px;
+    width: 78px;
+    height: 78px;
+}
+
+.current-team-name {
+    font-weight: bold;
+    font-size: 1.1rem;
 }
 
 .team-cell {
@@ -579,9 +593,17 @@ body {
     font-size: 0.85rem;
 }
 
+#mockRoom .current-team-logo-wrap {
+    min-height: 48px;
+}
+
 #mockRoom .current-team-logo {
-    width: 26px;
-    height: 26px;
+    width: 48px;
+    height: 48px;
+}
+
+#mockRoom .current-team-name {
+    font-size: 0.9rem;
 }
 
 #mockRoom .timer {
