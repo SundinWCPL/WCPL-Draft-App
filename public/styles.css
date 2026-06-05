@@ -9,6 +9,12 @@ body {
     color: white;
 }
 
+/* Ensure JS-controlled hidden elements stay hidden even if component CSS sets display:flex. */
+[hidden] {
+    display: none !important;
+}
+
+
 .page {
     padding: 10px;
     height: 100vh;
