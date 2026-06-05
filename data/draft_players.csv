@@ -29,7 +29,7 @@ name:ChiafNeef,Chief Keef,Skater,"Sun, Tue, Thu, Fri, Sat","Center, Wing, Defens
 ,Gaara,Skater,"Sun, Mon, Tue, Wed, Thu","Center, Defense",name:Gaara
 ,Gary ,Skater,"Sun, Mon, Tue, Wed, Thu","Center, Wing, Defense",name:Gary
 ,Gedaliah,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Gedaliah
-,ghost,Skater/Goalie,"Sun, Sat","Wing, Goalie",name:ghost
+,ghost,Skater/Goalie,"Sun, Sat","Goalie, Wing",name:ghost
 ,GOOGI,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Wing,name:GOOGI
 ,GrantOsaurus,Skater,"Sun, Mon, Wed, Fri, Sat",Defense,name:GrantOsaurus
 ,Greenporkiepine,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Greenporkiepine
@@ -72,7 +72,7 @@ name:Jarry,Marsamune,Skater,"Sun, Mon, Tue, Wed, Fri, Sat",Defense,name:Jarry
 ,Poro,Skater,"Sun, Mon, Tue, Wed, Thu, Sat",Center,name:Poro
 ,PrayForLeslie,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:PrayForLeslie
 ,pretty,Skater,"Sun, Mon, Tue, Wed, Sat","Center, Wing, Defense",name:pretty
-,Puff,Skater/Goalie,"Tue, Wed, Thu","Wing, Goalie",name:Puff
+,Puff,Skater/Goalie,"Tue, Wed, Thu","Goalie, Wing",name:Puff
 ,Pyros,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:Pyros
 ,Quick,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Quick
 ,robertthomas,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:robertthomas
