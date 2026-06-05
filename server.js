@@ -15,9 +15,18 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 
 const statePath = path.join(DATA_DIR, "draft_state.json");
 const resultsExportPath = path.join(DATA_DIR, "draft_results.csv");
+const d2ExcludedPlayersPath = path.join(DATA_DIR, "d2_excluded_players.json");
+
+const ACTIVE_DRAFT_FILES = [
+    "draft_players.csv",
+    "draft_teams.csv",
+    "draft_order.csv",
+    "draft_users.csv"
+];
 
 function getInitialState() {
     return {
+        division: "D1",
         draftedPicks: [],
         currentPickIndex: 0,
         pickTrades: {},
@@ -37,6 +46,7 @@ function normalizeDraftState(state) {
     return {
         ...initial,
         ...state,
+        division: state?.division === "D2" ? "D2" : "D1",
         draftedPicks: Array.isArray(state?.draftedPicks) ? state.draftedPicks : [],
         currentPickIndex: Number(state?.currentPickIndex || 0),
         pickTrades: state?.pickTrades && typeof state.pickTrades === "object" && !Array.isArray(state.pickTrades)
@@ -93,7 +103,7 @@ function writeDraftState(state) {
 }
 
 function readDraftOrderSync() {
-    const orderPath = path.join(APP_DATA_DIR, "draft_order.csv");
+    const orderPath = path.join(DATA_DIR, "draft_order.csv");
 
     if (!fs.existsSync(orderPath)) return [];
 
@@ -155,8 +165,106 @@ function escapeCsv(value) {
     return text;
 }
 
-async function writeDraftResultsExport(state) {
-    const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+function normalizeName(value) {
+    return String(value || "").trim().toLowerCase();
+}
+
+function copyDraftTemplateToActive(division) {
+    const sourceDir = path.join(DATA_DIR, division);
+
+    if (!fs.existsSync(sourceDir)) {
+        throw new Error(`Missing ${division} data folder`);
+    }
+
+    ACTIVE_DRAFT_FILES.forEach(fileName => {
+        const sourcePath = path.join(sourceDir, fileName);
+        const targetPath = path.join(DATA_DIR, fileName);
+
+        if (!fs.existsSync(sourcePath)) {
+            throw new Error(`Missing ${division}/${fileName}`);
+        }
+
+        fs.copyFileSync(sourcePath, targetPath);
+    });
+}
+
+function writeRowsCsv(filePath, headers, rows) {
+    const csvText = [
+        headers.map(escapeCsv).join(","),
+        ...rows.map(row => headers.map(header => escapeCsv(row[header] || "")).join(","))
+    ].join("\n");
+
+    fs.writeFileSync(filePath, csvText);
+}
+
+function filterActivePlayersByExcludedNames(excludedNames) {
+    const playersPath = path.join(DATA_DIR, "draft_players.csv");
+    const raw = fs.readFileSync(playersPath, "utf8").trim();
+    if (!raw) return { removedCount: 0, keptCount: 0 };
+
+    const [headerLine] = raw.split(/\r?\n/);
+    const headers = parseCsvLine(headerLine).map(h => h.trim());
+    const players = readCsvSync(playersPath);
+    const excluded = new Set((excludedNames || []).map(normalizeName).filter(Boolean));
+    const keptPlayers = players.filter(player => !excluded.has(normalizeName(player.name)));
+
+    writeRowsCsv(playersPath, headers, keptPlayers);
+
+    return {
+        removedCount: players.length - keptPlayers.length,
+        keptCount: keptPlayers.length
+    };
+}
+
+function getD1RoundsOneToFourDraftedNames(state, d1DraftOrder, d1Teams) {
+    const teamCount = Math.max(1, d1Teams.length || 1);
+    const roundByPickNumber = {};
+
+    d1DraftOrder.forEach((pick, index) => {
+        roundByPickNumber[String(pick.pick_number)] = Math.floor(index / teamCount) + 1;
+    });
+
+    return (state.draftedPicks || [])
+        .filter(pick => Number(roundByPickNumber[String(pick.pick_number)] || 0) <= 4)
+        .map(pick => pick.player_name)
+        .filter(Boolean);
+}
+
+function writeD2ExcludedPlayers(excludedNames) {
+    fs.writeFileSync(d2ExcludedPlayersPath, JSON.stringify(excludedNames || [], null, 2));
+}
+
+function readD2ExcludedPlayers() {
+    if (!fs.existsSync(d2ExcludedPlayersPath)) return [];
+    try {
+        const parsed = JSON.parse(fs.readFileSync(d2ExcludedPlayersPath, "utf8"));
+        return Array.isArray(parsed) ? parsed : [];
+    } catch (err) {
+        return [];
+    }
+}
+
+function resetToDivision(division, excludedNames = []) {
+    copyDraftTemplateToActive(division);
+
+    let filterResult = { removedCount: 0, keptCount: 0 };
+
+    if (division === "D2") {
+        filterResult = filterActivePlayersByExcludedNames(excludedNames);
+        writeD2ExcludedPlayers(excludedNames);
+    } else if (fs.existsSync(d2ExcludedPlayersPath)) {
+        fs.unlinkSync(d2ExcludedPlayersPath);
+    }
+
+    const state = getInitialState();
+    state.division = division;
+    writeDraftState(state);
+
+    return { state: readDraftState(), filterResult };
+}
+
+async function writeDraftResultsExport(state, divisionOverride = null) {
+    const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
     const draftOrder = readDraftOrderSync();
 
     const teamById = {};
@@ -194,15 +302,19 @@ async function writeDraftResultsExport(state) {
         .map(row => row.map(escapeCsv).join(","))
         .join("\n");
 
-    fs.writeFileSync(
-        resultsExportPath,
-        csvText
-    );
+    const division = divisionOverride || state.division || "D1";
+    const exportPath = division === "D2"
+        ? path.join(DATA_DIR, "draft_results_D2.csv")
+        : resultsExportPath;
+
+    fs.writeFileSync(exportPath, csvText);
+
+    return exportPath;
 }
 
 app.get("/api/players", async (req, res) => {
     try {
-        const players = await readCsv(path.join(APP_DATA_DIR, "draft_players.csv"));
+        const players = await readCsv(path.join(DATA_DIR, "draft_players.csv"));
         res.json(players);
     } catch (err) {
         console.error(err);
@@ -214,7 +326,7 @@ app.post("/api/login", async (req, res) => {
     try {
         const { password } = req.body;
 
-        const users = await readCsv(path.join(APP_DATA_DIR, "draft_users.csv"));
+        const users = await readCsv(path.join(DATA_DIR, "draft_users.csv"));
 
         const user = users.find(row =>
             row.enabled === "TRUE" &&
@@ -239,7 +351,7 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/player-stats", async (req, res) => {
     try {
-        const stats = await readCsv(path.join(APP_DATA_DIR, "draft_player_stats.csv"));
+        const stats = await readCsv(path.join(DATA_DIR, "draft_player_stats.csv"));
         res.json(stats);
     } catch (err) {
         console.error(err);
@@ -249,7 +361,7 @@ app.get("/api/player-stats", async (req, res) => {
 
 app.get("/api/teams", async (req, res) => {
     try {
-        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+        const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
         res.json(teams);
     } catch (err) {
         console.error(err);
@@ -280,15 +392,48 @@ app.post("/api/export-results", async (req, res) => {
     try {
         const state = readDraftState();
 
-        await writeDraftResultsExport(state);
+        const exportPath = await writeDraftResultsExport(state);
 
         res.json({
             success: true,
-            message: `Draft results exported to ${resultsExportPath}`
+            message: `Draft results exported to ${exportPath}`
         });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to export draft results" });
+    }
+});
+
+
+app.post("/api/start-d2", async (req, res) => {
+    try {
+        const state = readDraftState();
+        const d1DraftOrder = readDraftOrderSync();
+        const d1Teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
+
+        if (state.division === "D2") {
+            return res.status(400).json({ error: "Draft is already in D2 mode." });
+        }
+
+        if (state.currentPickIndex < d1DraftOrder.length) {
+            return res.status(400).json({ error: "D1 draft must be complete before starting D2." });
+        }
+
+        await writeDraftResultsExport(state, "D1");
+
+        const excludedNames = getD1RoundsOneToFourDraftedNames(state, d1DraftOrder, d1Teams);
+        const { state: newState, filterResult } = resetToDivision("D2", excludedNames);
+
+        res.json({
+            success: true,
+            state: newState,
+            excludedCount: excludedNames.length,
+            removedCount: filterResult.removedCount,
+            keptCount: filterResult.keptCount
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Failed to start D2 draft" });
     }
 });
 
@@ -317,7 +462,7 @@ app.post("/api/pick", async (req, res) => {
             return res.status(400).json({ error: "Pick number does not match the current pick" });
         }
 
-        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+        const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
         const originalTeamId = getOriginalTeamId(currentPick);
         const currentTeamId = getCurrentPickOwnerId(state, currentPick);
         const team = teams.find(row => row.team_id === currentTeamId);
@@ -367,7 +512,7 @@ app.post("/api/trade-pick", async (req, res) => {
     try {
         const state = readDraftState();
         const draftOrder = readDraftOrderSync();
-        const teams = await readCsv(path.join(APP_DATA_DIR, "draft_teams.csv"));
+        const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
 
         const { pick_number, new_team_id } = req.body || {};
         const pickNumber = String(pick_number || "").trim();
@@ -413,9 +558,21 @@ app.post("/api/trade-pick", async (req, res) => {
 
 app.post("/api/reset", (req, res) => {
     try {
-        const state = getInitialState();
-        writeDraftState(state);
-        res.json(state);
+        const currentState = readDraftState();
+        const requestedMode = String(req.body?.mode || "").trim();
+        let division = "D1";
+        let excludedNames = [];
+
+        if (requestedMode === "D2") {
+            division = "D2";
+            excludedNames = readD2ExcludedPlayers();
+        } else if (requestedMode === "current" && currentState.division === "D2") {
+            division = "D2";
+            excludedNames = readD2ExcludedPlayers();
+        }
+
+        const { state, filterResult } = resetToDivision(division, excludedNames);
+        res.json({ state, ...filterResult });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: "Failed to reset draft" });

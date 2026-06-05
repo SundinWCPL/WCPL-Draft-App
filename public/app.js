@@ -6,6 +6,7 @@ let draftOrder = [];
 let draftedPicks = [];
 let currentPickIndex = 0;
 let pickTrades = {};
+let currentDivision = "D1";
 
 let announcementTimeout = null;
 let announcementPickNumber = null;
@@ -290,6 +291,7 @@ function applyState(state, options = {}) {
     draftedPicks = state.draftedPicks || [];
     currentPickIndex = state.currentPickIndex || 0;
     pickTrades = state.pickTrades || {};
+    currentDivision = state.division === "D2" ? "D2" : "D1";
 
     setTimerFromState(state.timer || {});
 
@@ -321,6 +323,12 @@ async function pollDraftState() {
         if (!response.ok) return;
 
         const state = await response.json();
+
+        if ((state.division === "D2" ? "D2" : "D1") !== currentDivision) {
+            await loadData();
+            return;
+        }
+
         applyState(state);
     } catch (err) {
         console.warn("Failed to poll draft state", err);
@@ -336,6 +344,7 @@ function updatePermissions() {
     const resetTimerButton = document.querySelector("#resetTimerButton");
 	const setTimerLengthButton = document.querySelector("#setTimerLengthButton");
 	const exportDraftButton = document.querySelector("#exportDraftButton");
+    const startD2Button = document.querySelector("#startD2Button");
     const tradePickControls = document.querySelector("#tradePickControls");
     const exportStatus = document.querySelector("#exportStatus");
 
@@ -358,6 +367,7 @@ function updatePermissions() {
     resetTimerButton.hidden = !isCommish;
 	setTimerLengthButton.hidden = !isCommish;
 	exportDraftButton.hidden = !isCommish;
+    if (startD2Button) startD2Button.hidden = !(isCommish && currentDivision === "D1" && draftComplete);
     if (tradePickControls) tradePickControls.hidden = !isCommish;
 
     if (draftComplete) {
@@ -762,15 +772,41 @@ if (!confirmed) return;
 });
 
 document.querySelector("#resetDraftButton").addEventListener("click", async () => {
-    const confirmed = confirm("Reset the entire draft? This will clear all picks.");
+    let mode = "D1";
 
-    if (!confirmed) return;
+    if (currentDivision === "D2") {
+        const choice = prompt(
+            "Reset Draft:\n\nType 1 to reset the current D2 draft.\nType 2 to reset all the way back to D1.\n\nAnything else cancels."
+        );
+
+        if (choice === "1") {
+            mode = "D2";
+        } else if (choice === "2") {
+            mode = "D1";
+        } else {
+            return;
+        }
+    } else {
+        const confirmed = confirm(
+            "Reset D1 Draft?\n\nThis will clear all picks, restore all D1 players, and reset the draft order."
+        );
+
+        if (!confirmed) return;
+    }
 
     const response = await fetch("/api/reset", {
-        method: "POST"
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ mode })
     });
 
-    const state = await response.json();
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        alert(error.error || "Failed to reset draft.");
+        return;
+    }
 
     selectedPlayer = null;
 
@@ -779,7 +815,7 @@ document.querySelector("#resetDraftButton").addEventListener("click", async () =
 
     document.querySelector("#draftButton").disabled = true;
 
-    applyState(state, { forceRender: true });
+    await loadData();
 });
 
 document.querySelector("#undoDraftButton").addEventListener("click", async () => {
@@ -971,6 +1007,36 @@ document.querySelector("#tradePickButton").addEventListener("click", async () =>
     applyState(state, { forceRender: true });
 });
 
+
+document.querySelector("#startD2Button").addEventListener("click", async () => {
+    const confirmed = confirm(
+        "Start D2 Draft?\n\nThis will export the completed D1 results, load the D2 teams/order/users, remove D1 round 1-4 players from the D2 pool, and reset the draft board."
+    );
+
+    if (!confirmed) return;
+
+    const response = await fetch("/api/start-d2", {
+        method: "POST"
+    });
+
+    if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        alert(error.error || "Failed to start D2 draft.");
+        return;
+    }
+
+    const result = await response.json();
+
+    selectedPlayer = null;
+    document.querySelector("#selectedPlayer").textContent =
+        "Click a player above to view details.";
+
+    await loadData();
+
+    const exportStatus = document.querySelector("#exportStatus");
+    exportStatus.hidden = false;
+    exportStatus.textContent = `D2 draft loaded. Removed ${result.removedCount || 0} D1 round 1-4 players from the D2 pool.`;
+});
 
 document.querySelector("#exportDraftButton").addEventListener("click", async () => {
     const response = await fetch("/api/export-results", {

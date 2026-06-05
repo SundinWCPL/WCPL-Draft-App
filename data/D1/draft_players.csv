@@ -1,0 +1,107 @@
+player_key,name,position,avail,pref_pos,player_page_key
+,BarDownBart,Skater,"Sun, Mon, Wed, Thu, Fri, Sat","Center, Wing",name:BarDownBart
+,barky,Goalie,Sat,Goalie,name:barky
+,BigChin,Skater,"Sun, Mon, Tue, Wed, Thu","Center, Wing",name:BigChin
+,Bingus,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:Bingus
+,BOESER,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:BOESER
+,Brodeur,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Brodeur
+,BrunoFernandge,Skater,"Sun, Mon, Sat","Wing, Defense",name:BrunoFernandge
+,Bwall,Goalie,"Wed, Thu, Fri",Goalie,name:Bwall
+,carl,Skater,"Sun, Mon, Wed, Fri, Sat","Wing, Defense",name:carl
+,cat,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:cat
+,cb,Skater,"Sun, Wed, Thu, Fri, Sat","Center, Wing",name:cb
+name:ChiafNeef,Chief Keef,Skater,"Sun, Tue, Thu, Fri, Sat","Center, Wing, Defense",name:ChiafNeef
+,Chippy,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Chippy
+,cloog,Skater/Goalie,"Mon, Tue, Wed, Thu, Sat","Defense, Goalie",name:cloog
+,Cooley,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:Cooley
+,custom,Skater,"Sun, Mon, Tue, Wed, Thu",Defense,name:custom
+,dabz,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:dabz
+,Dan,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Dan
+,DankyD,Skater,"Sun, Tue, Wed, Thu, Fri, Sat",Defense,name:DankyD
+,DickiePecker,Skater,"Sun, Fri, Sat","Center, Wing, Defense",name:DickiePecker
+,Dog,Skater,"Tue, Wed, Thu, Fri",Defense,name:Dog
+,Dorofeyev,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:Dorofeyev (D3)
+,Draisaitl,Skater,"Mon, Tue, Thu, Fri, Sat",Wing,name:Draisaitl
+,extendo,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:extendo
+,Figgy,Skater,"Tue, Wed, Thu, Fri, Sat",Wing,name:Figgy
+,FORD,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:FORD
+,Frolov,Skater,"Sun, Fri, Sat","Center, Wing",name:Frolov
+,Gaara,Skater,"Sun, Mon, Tue, Wed, Thu","Center, Defense",name:Gaara
+,Gary ,Skater,"Sun, Mon, Tue, Wed, Thu","Center, Wing, Defense",name:Gary
+,Gedaliah,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Gedaliah
+,ghost,Skater/Goalie,"Sun, Sat","Goalie, Wing",name:ghost
+,GOOGI,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Wing,name:GOOGI
+,GrantOsaurus,Skater,"Sun, Mon, Wed, Fri, Sat",Defense,name:GrantOsaurus
+,Greenporkiepine,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Greenporkiepine
+,gregmiller,Skater/Goalie,"Sun, Tue, Thu, Fri, Sat","Defense, Goalie",name:gregmiller
+,Grizz,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Grizz
+,Gumpy,Goalie,"Mon, Tue, Wed, Thu, Fri",Goalie,name:Gumpy
+,Invincible,Skater/Goalie,"Sun, Mon, Tue, Wed","Wing, Defense, Goalie",name:Invincible
+,Jackk,Skater,"Sun, Fri, Sat","Center, Wing",name:Jackk
+,JacksonSmith,Skater/Goalie,"Sun, Mon, Tue, Fri, Sat","Wing, Defense",name:JacksonSmith
+,Jag,Goalie,"Sun, Mon, Fri, Sat",Goalie,name:Jag
+,John Puck,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Wing,name:John Puck
+,Jyler,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:Jyler
+,Kadri,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Kadri
+,KANE,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:KANE
+,KeepItKrusty,Skater,"Sun, Tue, Thu, Fri, Sat","Center, Wing",name:KeepItKrusty
+,KNODEL,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Goalie",name:KNODEL
+,kolt,Skater/Goalie,"Mon, Tue, Wed, Thu","Center, Wing",name:kolt
+,lain,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:lain
+,LePuckuer,Skater,"Sun, Fri, Sat","Wing, Defense",name:LePuckuer
+,LickMyStickLisa,Skater,"Tue, Wed, Thu",Defense,name:LickMyStickLisa
+,Lucifumu,Skater,"Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:Lucifumu
+,Maatta,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:Maatta
+,mama,Goalie,"Sun, Mon, Fri, Sat","Defense, Goalie",name:mama
+name:Jarry,Marsamune,Skater,"Sun, Mon, Tue, Wed, Fri, Sat",Defense,name:Jarry
+,Maverick,Goalie,"Sun, Wed, Sat",Goalie,name:Maverick
+,Miku,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Miku
+,milk,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:milk
+,MissTheNetMarge,Skater,"Sun, Mon, Thu, Fri, Sat","Wing, Defense",name:MissTheNetMarge
+,Mobys,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Wing,name:Mobys
+,moose,Skater,Sun,"Center, Wing",name:moose
+,Mushy,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Wing, Defense",name:Mushy
+,Nakamura,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Nakamura
+,Nem,Skater,"Mon, Tue, Wed, Thu, Fri","Wing, Defense",name:Nem
+,Niemi,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Niemi
+,Oettinger,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Wing, Defense, Goalie",name:Oettinger
+,OfficeLAMP,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Center,name:OfficeLAMP
+,Oodoo,Skater,"Mon, Tue, Wed, Thu, Fri, Sat",Center,name:Oodoo
+,placenta,Skater,"Sun, Mon, Wed, Thu, Fri, Sat","Center, Wing",name:placenta
+,Pogba,Skater,"Mon, Tue, Wed, Thu, Fri","Center, Wing",name:Pogba
+,Poro,Skater,"Sun, Mon, Tue, Wed, Thu, Sat",Center,name:Poro
+,PrayForLeslie,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:PrayForLeslie
+,pretty,Skater,"Sun, Mon, Tue, Wed, Sat","Center, Wing, Defense",name:pretty
+,Puff,Skater/Goalie,"Tue, Wed, Thu","Goalie, Wing",name:Puff
+,Pyros,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:Pyros
+,Quick,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Quick
+,robertthomas,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:robertthomas
+,ronin,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:ronin
+name:Anvil,ScottStevens,Skater,"Sun, Thu, Fri, Sat","Center, Wing, Defense",name:Anvil
+,Sho,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Defense, Goalie",name:Sho
+,SoCanadian,Skater,"Thu, Fri","Center, Wing",name:SoCanadian
+,Son,Skater,"Sun, Fri, Sat","Center, Wing",name:Son
+,Sorg,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Sorg
+,spantch,Skater,"Mon, Tue, Wed, Thu, Sat",Wing,name:spantch
+,Stinger,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Wing,name:Stinger
+,stinkyshawn,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing",name:stinkyshawn
+,Sundin,Skater/Goalie,"Sun, Thu, Fri, Sat",Goalie,name:Sundin
+,SupaWoov,Skater/Goalie,"Tue, Thu, Fri, Sat",Defense,name:SupaWoov
+,Sven,Skater,"Sun, Sat","Center, Wing",name:Sven
+,THESWAGMAN,Skater,"Sun, Tue, Wed, Thu, Fri","Center, Wing",name:THESWAGMAN
+,ThrockMorton,Skater/Goalie,"Sun, Wed, Thu, Fri","Defense, Goalie",name:ThrockMorton
+,tov,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:tov
+,TSUJIMOTO,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:TSUJIMOTO
+,ttearr,Goalie,"Sun, Mon, Tue, Wed, Sat",Goalie,name:ttearr
+,TTVSkitsArk,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Wing, Defense",name:TTVSkitsArk
+,v,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Center, Wing, Defense",name:v
+,vxpr,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Wing, Defense",name:vxpr
+,walker,Skater,"Sun, Wed, Thu, Fri, Sat",Defense,name:walker
+,Weariertomato,Goalie,"Fri, Sat",Goalie,name:Weariertomato
+,Winky,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:Winky
+,Wooyoungmi,Skater,"Tue, Wed, Thu, Fri",Wing,name:Wooyoungmi
+,yune,Skater/Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:yune
+,ZambonaldTrump,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:ZambonaldTrump
+,ZDawg,Skater,"Mon, Tue, Wed, Thu, Fri, Sat",Defense,name:ZDawg
+,Zen,Goalie,"Sun, Mon, Tue, Wed, Thu, Fri, Sat",Goalie,name:Zen
+,Ziggy,Skater,"Sun, Mon, Tue, Wed, Thu, Fri, Sat","Wing, Defense",name:Ziggy
