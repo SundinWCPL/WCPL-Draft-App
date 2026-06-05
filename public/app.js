@@ -260,26 +260,47 @@ function populateTradeControls() {
     }
 }
 
+async function loadJsonArray(url, label) {
+    const response = await fetch(url, { cache: "no-store" });
+    const data = await response.json().catch(() => null);
+
+    if (!response.ok || !Array.isArray(data)) {
+        const message = data?.error || `Failed to load ${label}.`;
+        throw new Error(message);
+    }
+
+    return data;
+}
+
 async function loadData() {
-const [playersRes, statsRes, teamsRes, orderRes, stateRes] = await Promise.all([
-    fetch("/api/players"),
-    fetch("/api/player-stats"),
-    fetch("/api/teams"),
-    fetch("/api/order"),
-    fetch("/api/state")
-]);
+    try {
+        const [players, stats, teams, order, stateRes] = await Promise.all([
+            loadJsonArray("/api/players", "players"),
+            loadJsonArray("/api/player-stats", "player stats"),
+            loadJsonArray("/api/teams", "teams"),
+            loadJsonArray("/api/order", "draft order"),
+            fetch("/api/state", { cache: "no-store" })
+        ]);
 
-allPlayers = await playersRes.json();
-allPlayerStats = await statsRes.json();
-allTeams = await teamsRes.json();
-draftOrder = await orderRes.json();
+        const state = await stateRes.json();
 
-    const state = await stateRes.json();
+        if (!stateRes.ok) {
+            throw new Error(state?.error || "Failed to load draft state.");
+        }
 
-    renderDraftBoard();
-    renderPlayers();
-	populateRoleControls();
-    applyState(state, { forceRender: true });
+        allPlayers = players;
+        allPlayerStats = stats;
+        allTeams = teams;
+        draftOrder = order;
+
+        renderDraftBoard();
+        renderPlayers();
+        populateRoleControls();
+        applyState(state, { forceRender: true });
+    } catch (err) {
+        console.error(err);
+        alert(`Draft data failed to load: ${err.message}`);
+    }
 }
 
 function applyState(state, options = {}) {

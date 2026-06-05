@@ -13,6 +13,26 @@ const DATA_DIR = process.env.DATA_DIR || APP_DATA_DIR;
 
 fs.mkdirSync(DATA_DIR, { recursive: true });
 
+function resolveDataFile(fileName) {
+    const activePath = path.join(DATA_DIR, fileName);
+    if (fs.existsSync(activePath)) return activePath;
+
+    const bundledPath = path.join(APP_DATA_DIR, fileName);
+    if (fs.existsSync(bundledPath)) return bundledPath;
+
+    return activePath;
+}
+
+function resolveTemplateDir(division) {
+    const activeTemplateDir = path.join(DATA_DIR, division);
+    if (fs.existsSync(activeTemplateDir)) return activeTemplateDir;
+
+    const bundledTemplateDir = path.join(APP_DATA_DIR, division);
+    if (fs.existsSync(bundledTemplateDir)) return bundledTemplateDir;
+
+    return activeTemplateDir;
+}
+
 const statePath = path.join(DATA_DIR, "draft_state.json");
 const resultsExportPath = path.join(DATA_DIR, "draft_results.csv");
 const d2ExcludedPlayersPath = path.join(DATA_DIR, "d2_excluded_players.json");
@@ -103,7 +123,7 @@ function writeDraftState(state) {
 }
 
 function readDraftOrderSync() {
-    const orderPath = path.join(DATA_DIR, "draft_order.csv");
+    const orderPath = resolveDataFile("draft_order.csv");
 
     if (!fs.existsSync(orderPath)) return [];
 
@@ -141,13 +161,33 @@ function hasPickBeenDrafted(state, pickNumber) {
     );
 }
 
+function ensureActiveDraftData() {
+    const missingActiveFiles = ACTIVE_DRAFT_FILES.filter(fileName =>
+        !fs.existsSync(path.join(DATA_DIR, fileName))
+    );
+
+    if (missingActiveFiles.length > 0) {
+        console.log(`Seeding active draft data from D1 because these files were missing: ${missingActiveFiles.join(", ")}`);
+        copyDraftTemplateToActive("D1");
+    }
+
+    if (!fs.existsSync(statePath)) {
+        writeDraftState(getInitialState());
+    }
+}
+
+ensureActiveDraftData();
+
 app.use(express.static("public"));
 
 function readCsv(filePath) {
     return new Promise((resolve, reject) => {
         const results = [];
+        const stream = fs.createReadStream(filePath);
 
-        fs.createReadStream(filePath)
+        stream.on("error", reject);
+
+        stream
             .pipe(csv())
             .on("data", (data) => results.push(data))
             .on("end", () => resolve(results))
@@ -170,7 +210,7 @@ function normalizeName(value) {
 }
 
 function copyDraftTemplateToActive(division) {
-    const sourceDir = path.join(DATA_DIR, division);
+    const sourceDir = resolveTemplateDir(division);
 
     if (!fs.existsSync(sourceDir)) {
         throw new Error(`Missing ${division} data folder`);
@@ -198,7 +238,7 @@ function writeRowsCsv(filePath, headers, rows) {
 }
 
 function filterActivePlayersByExcludedNames(excludedNames) {
-    const playersPath = path.join(DATA_DIR, "draft_players.csv");
+    const playersPath = resolveDataFile("draft_players.csv");
     const raw = fs.readFileSync(playersPath, "utf8").trim();
     if (!raw) return { removedCount: 0, keptCount: 0 };
 
@@ -264,7 +304,7 @@ function resetToDivision(division, excludedNames = []) {
 }
 
 async function writeDraftResultsExport(state, divisionOverride = null) {
-    const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
+    const teams = await readCsv(resolveDataFile("draft_teams.csv"));
     const draftOrder = readDraftOrderSync();
 
     const teamById = {};
@@ -314,7 +354,7 @@ async function writeDraftResultsExport(state, divisionOverride = null) {
 
 app.get("/api/players", async (req, res) => {
     try {
-        const players = await readCsv(path.join(DATA_DIR, "draft_players.csv"));
+        const players = await readCsv(resolveDataFile("draft_players.csv"));
         res.json(players);
     } catch (err) {
         console.error(err);
@@ -326,7 +366,7 @@ app.post("/api/login", async (req, res) => {
     try {
         const { password } = req.body;
 
-        const users = await readCsv(path.join(DATA_DIR, "draft_users.csv"));
+        const users = await readCsv(resolveDataFile("draft_users.csv"));
 
         const user = users.find(row =>
             row.enabled === "TRUE" &&
@@ -351,7 +391,7 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/player-stats", async (req, res) => {
     try {
-        const stats = await readCsv(path.join(DATA_DIR, "draft_player_stats.csv"));
+        const stats = await readCsv(resolveDataFile("draft_player_stats.csv"));
         res.json(stats);
     } catch (err) {
         console.error(err);
@@ -361,7 +401,7 @@ app.get("/api/player-stats", async (req, res) => {
 
 app.get("/api/teams", async (req, res) => {
     try {
-        const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
+        const teams = await readCsv(resolveDataFile("draft_teams.csv"));
         res.json(teams);
     } catch (err) {
         console.error(err);
@@ -409,7 +449,7 @@ app.post("/api/start-d2", async (req, res) => {
     try {
         const state = readDraftState();
         const d1DraftOrder = readDraftOrderSync();
-        const d1Teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
+        const d1Teams = await readCsv(resolveDataFile("draft_teams.csv"));
 
         if (state.division === "D2") {
             return res.status(400).json({ error: "Draft is already in D2 mode." });
@@ -462,7 +502,7 @@ app.post("/api/pick", async (req, res) => {
             return res.status(400).json({ error: "Pick number does not match the current pick" });
         }
 
-        const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
+        const teams = await readCsv(resolveDataFile("draft_teams.csv"));
         const originalTeamId = getOriginalTeamId(currentPick);
         const currentTeamId = getCurrentPickOwnerId(state, currentPick);
         const team = teams.find(row => row.team_id === currentTeamId);
@@ -512,7 +552,7 @@ app.post("/api/trade-pick", async (req, res) => {
     try {
         const state = readDraftState();
         const draftOrder = readDraftOrderSync();
-        const teams = await readCsv(path.join(DATA_DIR, "draft_teams.csv"));
+        const teams = await readCsv(resolveDataFile("draft_teams.csv"));
 
         const { pick_number, new_team_id } = req.body || {};
         const pickNumber = String(pick_number || "").trim();
