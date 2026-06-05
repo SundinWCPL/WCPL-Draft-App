@@ -19,6 +19,14 @@ let timerDefaultSeconds = 120;
 let timerInterval = null;
 let timerRunning = false;
 
+
+function updateDraftTitle() {
+    const draftTitle = document.querySelector("#draftTitle");
+    if (!draftTitle) return;
+
+    draftTitle.textContent = `Season 3 ${currentDivision} Draft`;
+}
+
 function renderTimer() {
     const minutes = Math.floor(timerSeconds / 60);
     const seconds = timerSeconds % 60;
@@ -313,6 +321,7 @@ function applyState(state, options = {}) {
     currentPickIndex = state.currentPickIndex || 0;
     pickTrades = state.pickTrades || {};
     currentDivision = state.division === "D2" ? "D2" : "D1";
+    updateDraftTitle();
 
     setTimerFromState(state.timer || {});
 

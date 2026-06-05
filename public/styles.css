@@ -29,6 +29,14 @@ body {
     background: white;
     color: black;
     padding: 15px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+#draftBoard {
+    flex: 1;
+    min-height: 0;
     overflow: auto;
 }
 
@@ -376,31 +384,39 @@ body {
 }
 
 .trade-pick-controls {
-    margin-top: 4px;
+    flex: 0 0 auto;
+    margin-top: 6px;
     width: 100%;
-    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    white-space: nowrap;
+    overflow-x: auto;
+    padding-top: 4px;
 }
 
 .trade-pick-controls h3 {
-    margin: 2px 0;
-    font-size: 0.8rem;
+    margin: 0;
+    font-size: 0.85rem;
+}
+
+.trade-pick-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: nowrap;
 }
 
 .trade-pick-row select {
     padding: 3px;
     font-size: 0.75rem;
-    max-width: 140px;
+    max-width: 180px;
 }
 
 .trade-pick-row button {
-    padding: 4px 8px;
+    padding: 5px 9px;
     font-size: 0.75rem;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.trade-pick-row button {
-    padding: 7px 10px;
     font-weight: bold;
     cursor: pointer;
 }

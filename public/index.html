@@ -18,7 +18,7 @@
             class="draft-logo"
         >
 
-        <h1>Season 3 Draft</h1>
+        <h1 id="draftTitle">Season 3 D1 Draft</h1>
 		
 		<img
             src="images/wcpl-logo.png"
@@ -28,6 +28,15 @@
     </div>
 
     <div id="draftBoard"></div>
+
+    <div id="tradePickControls" class="trade-pick-controls" hidden>
+        <h3>Trade Pick</h3>
+        <div class="trade-pick-row">
+            <select id="tradePickSelect"></select>
+            <select id="tradeTeamSelect"></select>
+            <button id="tradePickButton">Trade Pick</button>
+        </div>
+    </div>
 
 </div>
 
@@ -50,15 +59,7 @@
 
 <div id="exportStatus" class="export-status" hidden></div>
 
-<div id="tradePickControls" class="trade-pick-controls" hidden>
-    <h3>Trade Pick</h3>
-    <div class="trade-pick-row">
-        <select id="tradePickSelect"></select>
-        <select id="tradeTeamSelect"></select>
-        <button id="tradePickButton">Trade Pick</button>
-    </div>
-</div>
-				<div class="role-controls">
+<div class="role-controls">
     <label for="roleSelect">Role</label>
     <select id="roleSelect">
         <option value="viewer">Viewer</option>
