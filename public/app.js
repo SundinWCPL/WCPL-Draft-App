@@ -975,6 +975,11 @@ document.querySelector("#loginButton").addEventListener("click", async () => {
     document.querySelector("#logoutButton").hidden = false;
 
     updatePermissions();
+
+    if (user.debugSwitchedToD2) {
+        alert("D2 debug mode loaded.");
+        await loadData();
+    }
 });
 
 document.querySelector("#logoutButton").addEventListener("click", () => {

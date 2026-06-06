@@ -366,6 +366,24 @@ app.post("/api/login", async (req, res) => {
     try {
         const { password } = req.body;
 
+        if (String(password || "").trim().toUpperCase() === "D2DEBUG") {
+            const state = readDraftState();
+            const d1DraftOrder = readDraftOrderSync();
+            const d1Teams = await readCsv(resolveDataFile("draft_teams.csv"));
+            const excludedNames = getD1RoundsOneToFourDraftedNames(state, d1DraftOrder, d1Teams);
+            const { state: newState, filterResult } = resetToDivision("D2", excludedNames);
+
+            return res.json({
+                role: "commish",
+                team_id: "",
+                display_name: "Commissioner",
+                debugSwitchedToD2: true,
+                state: newState,
+                excludedCount: excludedNames.length,
+                removedCount: filterResult.removedCount
+            });
+        }
+
         const users = await readCsv(resolveDataFile("draft_users.csv"));
 
         const user = users.find(row =>

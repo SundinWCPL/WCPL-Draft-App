@@ -1,8 +1,8 @@
 role,team_id,display_name,password,enabled
 commish,,Commissioner,7UL93,TRUE
-captain,Silly,Silly,73K2A,TRUE
-captain,Foster,Foster,552F3,TRUE
-captain,Grab,Grab,96A1V,TRUE
-captain,Marcus,Marcus,7N0U6,TRUE
-captain,JB,JB,7Q759,TRUE
-captain,Nick,Nick,3686S,TRUE
+captain,SEA,Silly,73K2A,TRUE
+captain,PKN,Foster,552F3,TRUE
+captain,TOR,Grab,96A1V,TRUE
+captain,LL,Marcus,7N0U6,TRUE
+captain,BCL,JB,7Q759,TRUE
+captain,NK,Nick,3686S,TRUE
