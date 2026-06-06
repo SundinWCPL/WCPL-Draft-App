@@ -1,7 +1,7 @@
 team_id,team_name,captain_player_key,bg_color,text_color,captain_role
-TEA,Tear,Tear,#FFFFFF,#000000,S
-CHL,Chilliam,Chilliam,#FFFFFF,#000000,S
-NAK,Naka,Naka,#FFFFFF,#000000,G
+RCH,Richmond Drivers,Tear,#9ADCD9,#e6e3bc,S
+CLE,Cleveland Spiders,Chilliam,#960012,#162B72,S
+BLD,Blades,Naka,#006d75,#ea7100,G
 BLM,Bloomer,Bloomer,#FFFFFF,#000000,S
-LGT,Light,Light,#FFFFFF,#000000,G
-OGR,Ogre,Ogre,#FFFFFF,#000000,G
+LGT,Lethbridge Light-Weights,Light,#83D9D8,#04192E,G
+BCK,Bucktown,Ogre,#98002e,#f9a01b,G
